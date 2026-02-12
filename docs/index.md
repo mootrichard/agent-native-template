@@ -1,0 +1,35 @@
+# docs/ — repository knowledge base (system of record)
+Owner: Repo Maintainers
+Last verified: 2026-02-12
+
+If it isn’t in this directory (or enforced in code/tests), it might as well not exist.
+
+## Start here (agents)
+1. `docs/DESIGN.md` — design principles and “taste invariants”
+2. `docs/QUALITY_SCORE.md` — what “good” means here (guardrails)
+3. `docs/PLANS.md` — how to write and execute plans for multi-hour tasks
+4. `docs/LINTS.md` — what is enforced mechanically
+5. `docs/GC.md` — recurring cleanup / drift control
+
+## Product and architecture
+- `../ARCHITECTURE.md` — short codemap + invariants
+- `docs/PRODUCT_SENSE.md` — product principles & acceptance language
+- `docs/RELIABILITY.md` — SLOs, perf budgets, resilience requirements
+- `docs/OBSERVABILITY.md` — how to query signals and validate behavior
+- `docs/SECURITY.md` — threat model, boundary parsing, secure defaults
+- `docs/FRONTEND.md` — UI legibility and deterministic validation guidance
+
+## Design history
+- `docs/design-docs/index.md` — catalog and verification status
+- `docs/design-docs/core-beliefs.md` — agent-first operating principles
+
+## Plans (execution)
+- `docs/exec-plans/README.md`
+- `docs/exec-plans/active/`
+- `docs/exec-plans/completed/`
+- `docs/exec-plans/tech-debt-tracker.md`
+
+## Generated + references
+- `docs/generated/README.md`
+- `docs/references/index.md`
+- `docs/references/sources.md`

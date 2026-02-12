@@ -1,0 +1,2 @@
+Placeholder: curated notes about the project’s package manager / tooling.
+Keep short, practical, and tailored to *this* repo’s usage.
