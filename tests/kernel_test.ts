@@ -12,6 +12,12 @@ import {
 import { findRepoRoot } from "../internal/kernel/helpers.ts";
 
 const root = await findRepoRoot();
+const SYNTHETIC_GIT_ENV = {
+  GIT_AUTHOR_NAME: "Codex Test",
+  GIT_AUTHOR_EMAIL: "codex-test@example.invalid",
+  GIT_COMMITTER_NAME: "Codex Test",
+  GIT_COMMITTER_EMAIL: "codex-test@example.invalid",
+} as const;
 
 Deno.test("guardrail evaluation passes expected metrics", () => {
   const guardrails = [
@@ -205,6 +211,7 @@ async function runGit(
     cwd: repoRoot,
     env: {
       ...Deno.env.toObject(),
+      ...SYNTHETIC_GIT_ENV,
       GIT_INDEX_FILE: indexFile,
       GIT_WORK_TREE: worktree,
     },
