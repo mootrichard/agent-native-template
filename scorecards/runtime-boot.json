@@ -1,0 +1,44 @@
+{
+  "budget_seconds": 60,
+  "editable_globs": [
+    "fixtures/runtime/**",
+    "internal/runtimefixture/**",
+    "scripts/dev.sh",
+    "scripts/smoke.sh",
+    "scripts/install-deps.sh",
+    "docs/OBSERVABILITY.md",
+    "docs/RELIABILITY.md",
+    "docs/scorecards/runtime-boot.md",
+    "scorecards/runtime-boot.json"
+  ],
+  "evaluator": {
+    "command": [
+      "./scripts/smoke.sh"
+    ],
+    "kind": "command"
+  },
+  "guardrails": [
+    {
+      "metric": "health_status",
+      "op": "eq",
+      "value": 200
+    },
+    {
+      "metric": "smoke_pass",
+      "op": "eq",
+      "value": true
+    },
+    {
+      "metric": "docs_hygiene_exit_code",
+      "op": "eq",
+      "value": 0
+    }
+  ],
+  "id": "runtime-boot",
+  "promotion_rule": "non_regressing",
+  "summary": "Keep the template locally bootable with observable startup evidence.",
+  "target": {
+    "direction": "min",
+    "metric": "startup_ms"
+  }
+}

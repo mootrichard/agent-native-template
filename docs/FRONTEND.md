@@ -1,8 +1,12 @@
 # Frontend & UI legibility
 Owner: Repo Maintainers
-Last verified: 2026-02-12
+Last verified: 2026-03-12
 
 Agents can validate UI behavior if we make it observable and automatable.
+
+## Current template baseline
+There is no frontend fixture in the template yet.
+The only bootable runtime is the disposable HTTP fixture launched from `fixtures/runtime/main.ts`.
 
 ## Expectations
 - UI flows should be reproducible locally.
@@ -20,3 +24,5 @@ Agents can validate UI behavior if we make it observable and automatable.
 - Keep UI modules small and namespaced by domain.
 - Prefer deterministic selectors and stable component boundaries.
 - Accessibility and semantics help automation and reduce flakiness.
+
+Seeded projects should extend this doc with real UI runtime, observability, and automated checks once a frontend exists.

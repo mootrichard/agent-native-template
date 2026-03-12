@@ -1,0 +1,12 @@
+{
+  "artifact_path": "docs/generated/improvement/gc-ledger-summary.json",
+  "by_vector": {
+    "docs-hygiene": 10
+  },
+  "by_verdict": {
+    "promote": 10
+  },
+  "experiment_count": 10,
+  "generated_at": "2026-03-12T03:38:41Z",
+  "recent_regressions": []
+}

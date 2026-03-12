@@ -1,34 +1,50 @@
 # ARCHITECTURE
 Owner: Repo Maintainers
-Last verified: 2026-02-12
+Last verified: 2026-03-12
 
 This document is a *map*, not a manual.
 It should stay relatively stable over time.
 
 ## What this repo is
-An agent-first product repository. The primary goal is to make the system legible,
-testable, and safe for autonomous iteration.
+An agent-first repository template with its own constitutional policy, executable scorecards,
+minimal runtime fixture, and append-only self-improvement loop.
 
 ## Codemap (where is the thing?)
-- `docs/`: system-of-record knowledge base
-- `docs/exec-plans/`: executable plans (active/completed) + tech debt tracker
-- `docs/design-docs/`: deeper design history and decisions
-- `docs/generated/`: machine-generated artifacts (schemas, inventories)
-- `docs/references/`: LLM-friendly references for tools/frameworks used here
-
-(Implementation directories will be added as the product is built; keep them namespaced.)
+- Constitutional layer:
+  - `AGENTS.md`
+  - `WORKFLOW.md`
+  - `ARCHITECTURE.md`
+- Knowledge base:
+  - `docs/`
+  - `docs/design-docs/`
+  - `docs/product-specs/`
+  - `docs/skills/`
+  - `docs/scorecards/`
+- Executable layer:
+  - `scorecards/`
+  - `scripts/`
+  - `cmd/kernel.ts`
+  - `internal/kernel/`
+  - `tests/`
+- Runtime fixture:
+  - `fixtures/runtime/main.ts`
+  - `internal/runtimefixture/`
+  - `.tmp/runtime/` (local only)
+- Improvement evidence:
+  - `docs/generated/improvement/`
+  - `improvement/ledger/experiments/`
 
 ## Architectural invariants (must not drift)
-1. Clear boundaries between layers and domains.
-2. Dependency direction is intentional and enforced mechanically.
-3. Data is parsed/validated at boundaries; internal code assumes refined types.
-4. Observability is first-class: logs/metrics/traces are queryable and used for validation.
-5. Everything important is discoverable in-repo.
+1. Keep `AGENTS.md` short and map-like; policy belongs in `WORKFLOW.md`.
+2. `docs/` remains the system of record for decisions, specs, and procedures.
+3. Scorecards stay machine-readable and conservative; promotion is non-regressing or stricter.
+4. Runtime observability is direct and local-first: structured logs, simple metrics, correlation ids.
+5. Experiment history is append-only and auditable.
 
 ## Cross-cutting concerns
-- Auth / connectors / telemetry / feature flags enter through explicit “provider” interfaces.
-- Testing and linting are treated as product features for agents.
-- Docs are validated via CI to prevent rot.
+- Testing, linting, and score artifacts are product features for agents.
+- Runtime bootability is part of the template, not deferred to seeded projects.
+- Scheduled GC is report-only in v1 and exists to prevent drift, not to auto-merge code.
 
 ## Where to learn more
 Start at `docs/index.md`.

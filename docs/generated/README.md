@@ -12,3 +12,4 @@ Do not edit these by hand unless explicitly stated in the file.
 
 ## Current artifacts
 - `docs/generated/db-schema.md`
+- `docs/generated/improvement/README.md`

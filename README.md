@@ -1,31 +1,42 @@
 # Agent-first repo starter
 Owner: Repo Maintainers
-Last verified: 2026-02-12
+Last verified: 2026-03-12
 
 This repository is designed to be *built and maintained primarily by coding agents*.
 
-Humans set direction, constraints, and acceptance criteria. Agents:
-- implement features,
-- write tests and docs,
-- update CI and tooling,
-- run validation loops,
-- open PRs, respond to review, and (optionally) merge.
+The template now includes:
+- a short map-style `AGENTS.md`
+- protected constitutional policy in `WORKFLOW.md`
+- executable scorecards
+- a minimal improvement kernel with an append-only ledger
+- a bootable disposable runtime fixture
 
-## Where to start (humans)
-- Read `AGENTS.md` (high-level map for agents).
-- Read `docs/index.md` (the repo’s “system of record” knowledge base).
-- Create or update a plan in `docs/exec-plans/active/` for any non-trivial work.
-- Use PRs for everything.
+## Quickstart
+1. `deno task`
+2. `deno task install`
+3. `deno task test`
+4. `deno task validate`
+5. `deno task baseline --vector docs-hygiene`
+6. `deno task score --vector runtime-boot`
+7. `deno task experiment --vector runtime-boot --candidate-ref <branch>`
 
-## Validation loop (template baseline)
-- `make install` — baseline setup (currently no-op)
-- `make test` — runs fast docs integrity checks
-- `make validate` — full fast validation (same baseline, extend as code is added)
+## Working model
+- Read `AGENTS.md`, `WORKFLOW.md`, and `docs/index.md`.
+- Create or refresh an ExecPlan for non-trivial work.
+- Keep changes small, run the smallest relevant checks, and record artifacts.
+- Use scorecards and the ledger for scoped improvement work.
 
-## Where to start (agents)
-- Read `AGENTS.md` and follow it literally.
-- Treat `docs/` as ground truth. If something important is not in the repo, it effectively does not exist.
-- Prefer small PRs with clear validation evidence.
+## Main commands
+- `deno task install` verifies `deno`, `git`, and `curl`.
+- `deno task dev` boots the local runtime fixture from `fixtures/runtime/`.
+- `deno task smoke` validates health, metrics, and logs.
+- `deno task baseline --vector <scorecard>` captures the current vector baseline.
+- `deno task score --vector <scorecard>` writes a machine-readable score artifact.
+- `deno task experiment --vector <scorecard> --candidate-ref <ref>` compares refs and appends a ledger entry.
 
-## Philosophy (one paragraph)
-Speed without decay comes from: strict structure, strong guardrails, and continuous cleanup.
+## Key references
+- `WORKFLOW.md`
+- `docs/index.md`
+- `docs/product-specs/index.md`
+- `docs/skills/index.md`
+- `docs/scorecards/index.md`

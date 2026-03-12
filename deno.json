@@ -1,0 +1,27 @@
+{
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "install": "./scripts/install-deps.sh",
+    "dev": "./scripts/dev.sh",
+    "smoke": "./scripts/smoke.sh",
+    "docs-lint": "./scripts/validate-docs.sh",
+    "test": "./scripts/test.sh",
+    "validate": "./scripts/validate.sh",
+    "baseline": "deno run -A ./cmd/kernel.ts baseline",
+    "score": "deno run -A ./cmd/kernel.ts score",
+    "experiment": "deno run -A ./cmd/kernel.ts experiment",
+    "promote": "deno run -A ./cmd/kernel.ts promote",
+    "revert": "deno run -A ./cmd/kernel.ts revert",
+    "gc-docs": "deno run -A ./cmd/kernel.ts gc-docs",
+    "gc-structure": "deno run -A ./cmd/kernel.ts gc-structure",
+    "gc-ledger": "deno run -A ./cmd/kernel.ts gc-ledger"
+  }
+}

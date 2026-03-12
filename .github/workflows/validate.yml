@@ -13,5 +13,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install baseline prerequisites
+        run: deno task install
+
+      - name: Run tests
+        run: deno task test
+
       - name: Run validation
-        run: make validate
+        run: deno task validate
+
+      - name: Score docs hygiene
+        run: deno task score --vector docs-hygiene
+
+      - name: Smoke runtime fixture
+        run: deno task smoke
+
+      - name: Score runtime boot
+        run: deno task score --vector runtime-boot
+
+      - name: Upload improvement artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: improvement-artifacts
+          path: docs/generated/improvement/

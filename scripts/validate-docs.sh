@@ -35,7 +35,7 @@ resolve_path() {
     http://*|https://*)
       return 1
       ;;
-    docs/*|AGENTS.md|ARCHITECTURE.md|README.md)
+    docs/*|AGENTS.md|ARCHITECTURE.md|README.md|WORKFLOW.md)
       if [[ -e "$ROOT_DIR/$token" ]]; then
         printf '%s\n' "$ROOT_DIR/$token"
         return 0
@@ -205,6 +205,7 @@ done < <(
     printf '%s\n' "$ROOT_DIR/AGENTS.md"
     printf '%s\n' "$ROOT_DIR/ARCHITECTURE.md"
     printf '%s\n' "$ROOT_DIR/README.md"
+    printf '%s\n' "$ROOT_DIR/WORKFLOW.md"
     find "$ROOT_DIR/docs" -type f -name '*.md'
   } | sort -u
 )

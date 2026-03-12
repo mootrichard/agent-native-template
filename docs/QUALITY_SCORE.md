@@ -1,23 +1,25 @@
 # Quality score (what “good” means here)
 Owner: Repo Maintainers
-Last verified: 2026-02-12
+Last verified: 2026-03-12
 
 This repo optimizes for agent throughput without decay.
 
 ## The “quality equation”
-Quality = (mechanical verifiability) + (legibility) + (safe defaults)
+Quality = executable scorecards + legible boundaries + safe defaults + durable evidence
 
 ## Guardrails we aim to encode
 1. **High test coverage of changed behavior**
-   - Coverage reports should be actionable: uncovered lines are a to-do list.
+   - Kernel logic, runtime smoke behavior, and ledger summaries have direct tests.
 2. **Small, well-namespaced files**
    - Directory structure is a navigation interface for agents.
 3. **Fast checks**
-   - Tests and lints must be cheap enough to run repeatedly in the loop.
+   - `deno task test` and `deno task validate` stay cheap enough for repeated local use.
 4. **Determinism**
-   - Reduce flakiness; when flakes exist, track and fix them quickly.
+   - Artifacts use UTC timestamps, stable JSON keys, and explicit paths.
 5. **Evidence-based PRs**
-   - Every PR includes how it was validated and what the expected outcomes are.
+   - Scorecards, smoke artifacts, and ledger entries make validation inspectable.
+6. **Conservative promotion**
+   - `non_regressing` is the default rule until a stronger case exists.
 
 ## What to do when quality is missing
 Don’t “try harder”.

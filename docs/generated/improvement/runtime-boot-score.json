@@ -1,0 +1,28 @@
+{
+  "artifact_path": "docs/generated/improvement/runtime-boot-score.json",
+  "artifact_written": true,
+  "docs_hygiene_exit_code": 0,
+  "duration_ms": 189,
+  "guardrails": {
+    "details": [],
+    "passed": true
+  },
+  "health_status": 200,
+  "log_path": ".tmp/runtime/score-runtime-boot-2026-03-12T03-52-11Z/server.log",
+  "metrics_status": 200,
+  "pass": true,
+  "request_count": 3,
+  "root_status": 200,
+  "smoke_artifact": "docs/generated/improvement/runtime-smoke.json",
+  "smoke_exit_code": 0,
+  "smoke_pass": true,
+  "startup_ms": 106,
+  "stderr_tail": [],
+  "stdout_tail": [
+    "[runtime-smoke] pass=true startup_ms=106 artifact=docs/generated/improvement/runtime-smoke.json"
+  ],
+  "target_direction": "min",
+  "target_metric": "startup_ms",
+  "timestamp": "2026-03-12T03:52:11Z",
+  "vector_id": "runtime-boot"
+}

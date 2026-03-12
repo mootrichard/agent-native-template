@@ -1,0 +1,36 @@
+{
+  "budget_seconds": 60,
+  "editable_globs": [
+    "AGENTS.md",
+    "WORKFLOW.md",
+    "ARCHITECTURE.md",
+    "README.md",
+    "docs/**",
+    "scripts/validate-docs.sh"
+  ],
+  "evaluator": {
+    "command": [
+      "./scripts/validate-docs.sh"
+    ],
+    "kind": "command"
+  },
+  "guardrails": [
+    {
+      "metric": "exit_code",
+      "op": "eq",
+      "value": 0
+    },
+    {
+      "metric": "artifact_written",
+      "op": "eq",
+      "value": true
+    }
+  ],
+  "id": "docs-hygiene",
+  "promotion_rule": "non_regressing",
+  "summary": "Keep repository knowledge structurally valid and fresh.",
+  "target": {
+    "direction": "min",
+    "metric": "failure_count"
+  }
+}

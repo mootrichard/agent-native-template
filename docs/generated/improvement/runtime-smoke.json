@@ -1,0 +1,36 @@
+{
+  "base_url": "http://127.0.0.1:55254",
+  "health": {
+    "request_count": 1,
+    "request_id": "fe8046b2-3e8f-41f5-9de9-aba2be22c37a",
+    "startup_ms": 106,
+    "startup_timestamp": "2026-03-12T03:52:11Z",
+    "status": "ok"
+  },
+  "health_status": 200,
+  "log_path": ".tmp/runtime/score-runtime-boot-2026-03-12T03-52-11Z/server.log",
+  "metrics": {
+    "last_request_ms": 0,
+    "request_count": 3,
+    "request_id": "5bfe255f-6a1a-43b1-9193-1ca6172f1e1e",
+    "startup_ms": 123,
+    "startup_timestamp": "2026-03-12T03:52:11Z",
+    "uptime_ms": 123
+  },
+  "metrics_path": ".tmp/runtime/score-runtime-boot-2026-03-12T03-52-11Z/metrics.json",
+  "metrics_status": 200,
+  "port": 55254,
+  "request_count": 3,
+  "root_response": {
+    "message": "runtime fixture ready",
+    "request_id": "46654790-e407-47a2-b94d-519014b46930",
+    "service": "agent-native-template"
+  },
+  "root_response_path": ".tmp/runtime/score-runtime-boot-2026-03-12T03-52-11Z/root.json",
+  "root_status": 200,
+  "run_dir": ".tmp/runtime/score-runtime-boot-2026-03-12T03-52-11Z",
+  "run_id": "score-runtime-boot-2026-03-12T03-52-11Z",
+  "smoke_pass": true,
+  "startup_ms": 106,
+  "timestamp": "2026-03-12T03:52:11Z"
+}
