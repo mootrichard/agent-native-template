@@ -18,6 +18,7 @@
     "baseline": "deno run -A ./cmd/kernel.ts baseline",
     "score": "deno run -A ./cmd/kernel.ts score",
     "experiment": "deno run -A ./cmd/kernel.ts experiment",
+    "propose": "deno run -A ./cmd/kernel.ts propose",
     "promote": "deno run -A ./cmd/kernel.ts promote",
     "revert": "deno run -A ./cmd/kernel.ts revert",
     "gc-docs": "deno run -A ./cmd/kernel.ts gc-docs",

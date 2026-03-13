@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   countFailureLines,
   evaluateGuardrails,
+  exists,
   filenameTimestamp,
   freePort,
   isoTimestamp,
@@ -12,6 +13,7 @@ import {
   readNumber,
   readString,
   repoRelative,
+  resolveRepoPath,
   runCommand,
   tailLines,
   writeJson,
@@ -32,13 +34,28 @@ export async function scoreVector(
   artifactPath = defaultScoreArtifactPath(root, vector),
 ): Promise<Record<string, unknown>> {
   const scorecard = await loadScorecard(root, vector);
-  if (scorecard.id === "docs-hygiene") {
+  const scoringKind = scorecard.scoring?.kind ?? legacyScoringKind(scorecard.id);
+  if (scoringKind === "docs_hygiene") {
     return await scoreDocsHygiene(root, scorecard, artifactPath);
   }
-  if (scorecard.id === "runtime-boot") {
+  if (scoringKind === "runtime_boot") {
     return await scoreRuntimeBoot(root, scorecard, artifactPath);
   }
-  throw new Error(`Unsupported scorecard '${scorecard.id}'.`);
+  if (scoringKind === "artifact_json") {
+    return await scoreArtifactJson(root, scorecard, artifactPath);
+  }
+  throw new Error(`Unsupported scoring kind '${scoringKind}' for scorecard '${scorecard.id}'.`);
+}
+
+function legacyScoringKind(scorecardId: string): string {
+  switch (scorecardId) {
+    case "docs-hygiene":
+      return "docs_hygiene";
+    case "runtime-boot":
+      return "runtime_boot";
+    default:
+      return "";
+  }
 }
 
 async function scoreDocsHygiene(
@@ -95,7 +112,8 @@ async function scoreRuntimeBoot(
     timeoutMs: scorecard.budget_seconds * 1000,
   });
 
-  const smokeData: Record<string, unknown> = await readJson<Record<string, unknown>>(smokeArtifact).catch(() => ({}));
+  const smokeData: Record<string, unknown> = await readJson<Record<string, unknown>>(smokeArtifact)
+    .catch(() => ({}));
   const artifact: Record<string, unknown> = {
     artifact_path: repoRelative(root, artifactPath),
     artifact_written: true,
@@ -121,6 +139,41 @@ async function scoreRuntimeBoot(
   const guardrails = evaluateGuardrails(scorecard.guardrails, artifact);
   artifact.guardrails = guardrails;
   artifact.pass = smokeResult.exit_code === 0 && docsResult.exit_code === 0 && guardrails.passed;
+  await writeJson(artifactPath, artifact);
+  return artifact;
+}
+
+async function scoreArtifactJson(
+  root: string,
+  scorecard: Scorecard,
+  artifactPath: string,
+): Promise<Record<string, unknown>> {
+  const result = await runCommand(scorecard.evaluator.command, {
+    cwd: root,
+    timeoutMs: scorecard.budget_seconds * 1000,
+  });
+  const sourceArtifactPath = resolveRepoPath(root, scorecard.scoring?.artifact_path);
+  const sourceArtifact = sourceArtifactPath && await exists(sourceArtifactPath)
+    ? await readJson<Record<string, unknown>>(sourceArtifactPath).catch(() => ({}))
+    : {};
+  const artifact: Record<string, unknown> = {
+    ...sourceArtifact,
+    artifact_path: repoRelative(root, artifactPath),
+    artifact_written: !!sourceArtifactPath && await exists(sourceArtifactPath),
+    command: scorecard.evaluator.command,
+    duration_ms: result.duration_ms,
+    exit_code: result.exit_code,
+    pass: false,
+    stderr_tail: tailLines(result.stderr),
+    stdout_tail: tailLines(result.stdout),
+    target_direction: scorecard.target.direction,
+    target_metric: scorecard.target.metric,
+    timestamp: isoTimestamp(),
+    vector_id: scorecard.id,
+  };
+  const guardrails = evaluateGuardrails(scorecard.guardrails, artifact);
+  artifact.guardrails = guardrails;
+  artifact.pass = result.exit_code === 0 && artifact.artifact_written === true && guardrails.passed;
   await writeJson(artifactPath, artifact);
   return artifact;
 }
@@ -154,9 +207,14 @@ export async function writeSmokeArtifact(
   root: string,
   input: SmokeArtifactInput,
 ): Promise<Record<string, unknown>> {
-  const health: Record<string, unknown> = await readJson<Record<string, unknown>>(input.healthPath).catch(() => ({}));
-  const rootResponse: Record<string, unknown> = await readJson<Record<string, unknown>>(input.rootPath).catch(() => ({}));
-  const metrics: Record<string, unknown> = await readJson<Record<string, unknown>>(input.metricsPath).catch(() => ({}));
+  const health: Record<string, unknown> = await readJson<Record<string, unknown>>(input.healthPath)
+    .catch(() => ({}));
+  const rootResponse: Record<string, unknown> = await readJson<Record<string, unknown>>(
+    input.rootPath,
+  ).catch(() => ({}));
+  const metrics: Record<string, unknown> = await readJson<Record<string, unknown>>(
+    input.metricsPath,
+  ).catch(() => ({}));
   const artifact: Record<string, unknown> = {
     base_url: input.baseUrl,
     health,

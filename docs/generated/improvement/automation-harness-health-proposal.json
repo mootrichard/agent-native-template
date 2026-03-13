@@ -1,0 +1,92 @@
+{
+  "artifact_path": "docs/generated/improvement/automation-harness-health-proposal.json",
+  "change": {
+    "id": "improve-automation-harness-health",
+    "path": "changes/improve-automation-harness-health",
+    "status": "not_created"
+  },
+  "evidence": {
+    "baseline_artifact": "docs/generated/improvement/automation-harness-health-baseline.json",
+    "score_artifact": "docs/generated/improvement/automation-harness-health-score.json"
+  },
+  "generated_at": "2026-03-13T04:54:49Z",
+  "governance": {
+    "execution_boundary": "planner_proposes_executor_acts_humans_govern",
+    "merge_policy": {
+      "critical": "manual_only",
+      "moderate": "one_human",
+      "risky": "two_humans",
+      "safe": "auto_if_green"
+    },
+    "review_required": true,
+    "risk_tier": "moderate"
+  },
+  "project": {
+    "display_name": "Seed Project",
+    "key": "template",
+    "merge_policy": {
+      "critical": "manual_only",
+      "moderate": "one_human",
+      "risky": "two_humans",
+      "safe": "auto_if_green"
+    },
+    "risk_tier": "moderate",
+    "scorecards": [
+      "docs-hygiene",
+      "runtime-boot",
+      "automation-harness-health"
+    ],
+    "source_path": ".",
+    "tracker": {},
+    "validation": [
+      "deno task validate",
+      "deno task score --vector docs-hygiene",
+      "deno task score --vector runtime-boot",
+      "deno task score --vector automation-harness-health"
+    ],
+    "workflow": {
+      "path": "AGENTS.md"
+    }
+  },
+  "recommendation": "keep_monitoring",
+  "scorecard_summary": "Keep proposal artifacts, change packages, registry contracts, and review handoff inputs aligned.",
+  "signal": {
+    "baseline_value": 0,
+    "current_value": 0,
+    "guardrails": {
+      "details": [],
+      "passed": true
+    },
+    "pass": true,
+    "regressed": false,
+    "target_direction": "min",
+    "target_metric": "missing_contracts"
+  },
+  "story": {
+    "acceptance_criteria": [
+      "The repo must define a local project registry entry with workflow, validation, scorecards, and merge policy defaults.",
+      "Proposal generation must emit a structured artifact and scaffold a deterministic change package.",
+      "Review handoff inputs must keep baseline, candidate, guardrails, validation, evidence, and governance explicit.",
+      "Preserve guardrail status for automation-harness-health.",
+      "Do not regress missing_contracts from the recorded baseline."
+    ],
+    "handoff_markdown": "## Improvement Summary\n\nProject\ntemplate\n\nVector\nautomation-harness-health\n\nRecommendation\nkeep_monitoring\n\nObserved Signals\n- missing_contracts: 0\n- baseline: 0\n- pass: true\n- guardrails: passed\n\nHypothesis\nMaking the planning and review contracts explicit in the template lets downstream systems compile safer project-local harnesses instead of relying on prompt prose.\n\nSuccess Metric\n- automation-harness-health missing_contracts (min)\n- preserve or improve on baseline 0\n\nChange Package\n- change id: improve-automation-harness-health\n- status: not_created\n- proposal: changes/improve-automation-harness-health/proposal.md\n- design: changes/improve-automation-harness-health/design.md\n- tasks: changes/improve-automation-harness-health/tasks.md\n\nAcceptance Criteria\n- The repo must define a local project registry entry with workflow, validation, scorecards, and merge policy defaults.\n- Proposal generation must emit a structured artifact and scaffold a deterministic change package.\n- Review handoff inputs must keep baseline, candidate, guardrails, validation, evidence, and governance explicit.\n- Preserve guardrail status for automation-harness-health.\n- Do not regress missing_contracts from the recorded baseline.\n\nValidation\n- deno task score --vector automation-harness-health\n- deno task propose --vector automation-harness-health\n- deno task validate\n- deno task score --vector docs-hygiene\n- deno task score --vector runtime-boot\n\nEvidence\n- docs/generated/improvement/automation-harness-health-score.json\n- docs/generated/improvement/automation-harness-health-baseline.json\n\nGovernance\n- risk tier: moderate\n- merge policy: one_human\n- review required: true\n- workflow contract: AGENTS.md\n\nSummary\nKeep the template's planning and review contracts explicit and mechanically verifiable.",
+    "hypothesis": "Making the planning and review contracts explicit in the template lets downstream systems compile safer project-local harnesses instead of relying on prompt prose.",
+    "labels": [
+      "automation-harness-health",
+      "improvement",
+      "automation",
+      "harness"
+    ],
+    "summary": "Keep the template's planning and review contracts explicit and mechanically verifiable.",
+    "title": "Improve automation harness health",
+    "validation": [
+      "deno task score --vector automation-harness-health",
+      "deno task propose --vector automation-harness-health",
+      "deno task validate",
+      "deno task score --vector docs-hygiene",
+      "deno task score --vector runtime-boot"
+    ]
+  },
+  "vector": "automation-harness-health"
+}

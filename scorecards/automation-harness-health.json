@@ -1,0 +1,90 @@
+{
+  "budget_seconds": 30,
+  "editable_globs": [
+    "README.md",
+    "WORKFLOW.md",
+    "ARCHITECTURE.md",
+    "deno.json",
+    "cmd/kernel.ts",
+    "internal/kernel/**",
+    "scripts/score-contracts.ts",
+    "projects/registry.json",
+    "changes/**",
+    ".github/pull_request_template.md",
+    "docs/product-specs/index.md",
+    "docs/product-specs/self-improvement-loop.md",
+    "docs/product-specs/project-registry.md",
+    "docs/product-specs/per-project-harness-model.md",
+    "docs/product-specs/review-merge-governance.md",
+    "docs/product-specs/pr-review-merge-harness.md",
+    "docs/scorecards/automation-harness-health.md",
+    "docs/scorecards/index.md",
+    "docs/generated/improvement/README.md",
+    "docs/LINTS.md",
+    "docs/QUALITY_SCORE.md",
+    "docs/skills/experiment-loop.md",
+    "scorecards/automation-harness-health.json"
+  ],
+  "evaluator": {
+    "command": [
+      "deno",
+      "run",
+      "-A",
+      "./scripts/score-contracts.ts",
+      "--vector",
+      "automation-harness-health",
+      "--artifact-path",
+      ".tmp/improvement/automation-harness-health.json"
+    ],
+    "kind": "command"
+  },
+  "guardrails": [
+    {
+      "metric": "contract_pass",
+      "op": "eq",
+      "value": true
+    },
+    {
+      "metric": "artifact_written",
+      "op": "eq",
+      "value": true
+    },
+    {
+      "metric": "required_contracts",
+      "op": "gte",
+      "value": 10
+    }
+  ],
+  "id": "automation-harness-health",
+  "proposal": {
+    "acceptance_criteria": [
+      "The repo must define a local project registry entry with workflow, validation, scorecards, and merge policy defaults.",
+      "Proposal generation must emit a structured artifact and scaffold a deterministic change package.",
+      "Review handoff inputs must keep baseline, candidate, guardrails, validation, evidence, and governance explicit."
+    ],
+    "hypothesis": "Making the planning and review contracts explicit in the template lets downstream systems compile safer project-local harnesses instead of relying on prompt prose.",
+    "labels": [
+      "automation",
+      "harness"
+    ],
+    "project_key": "template",
+    "risk_tier": "risky",
+    "summary": "Keep the template's planning and review contracts explicit and mechanically verifiable.",
+    "title": "Improve automation harness health",
+    "validation": [
+      "deno task score --vector automation-harness-health",
+      "deno task propose --vector automation-harness-health",
+      "deno task validate"
+    ]
+  },
+  "promotion_rule": "non_regressing",
+  "scoring": {
+    "artifact_path": ".tmp/improvement/automation-harness-health.json",
+    "kind": "artifact_json"
+  },
+  "summary": "Keep proposal artifacts, change packages, registry contracts, and review handoff inputs aligned.",
+  "target": {
+    "direction": "min",
+    "metric": "missing_contracts"
+  }
+}

@@ -2,6 +2,7 @@ import { join } from "node:path";
 
 import { runExperiment, targetMetricFromEntry } from "../internal/kernel/experiment.ts";
 import { runDocGardening, runFileSizeScan, runLedgerSummary } from "../internal/kernel/gc.ts";
+import { defaultProposalArtifactPath, proposalForVector } from "../internal/kernel/proposal.ts";
 import {
   findRepoRoot,
   freePort,
@@ -39,6 +40,9 @@ try {
     case "promote":
       await runPromote(rest);
       break;
+    case "propose":
+      await runPropose(rest);
+      break;
     case "revert":
       await runRevert(rest);
       break;
@@ -68,7 +72,7 @@ try {
 
 function usage() {
   console.error(
-    "usage: deno run -A ./cmd/kernel.ts <baseline|score|experiment|promote|revert|gc-docs|gc-structure|gc-ledger|free-port|write-smoke-artifact> [...]",
+    "usage: deno run -A ./cmd/kernel.ts <baseline|score|experiment|promote|propose|revert|gc-docs|gc-structure|gc-ledger|free-port|write-smoke-artifact> [...]",
   );
 }
 
@@ -162,6 +166,22 @@ async function runPromote(args: string[]) {
     vector: stringFlag(flags, "vector"),
   });
   console.log(message);
+}
+
+async function runPropose(args: string[]) {
+  const flags = parseFlags(args);
+  const vector = stringFlag(flags, "vector", true)!;
+  const artifactPath = resolveRepoPath(root, stringFlag(flags, "artifact-path")) ??
+    defaultProposalArtifactPath(root, vector);
+  const proposal = await proposalForVector(root, vector, {
+    artifactPath,
+    scoreArtifactPath: resolveRepoPath(root, stringFlag(flags, "score-artifact")),
+    baselineArtifactPath: resolveRepoPath(root, stringFlag(flags, "baseline-artifact")),
+    projectKey: stringFlag(flags, "project"),
+  });
+  console.log(
+    `[proposal:${proposal.vector}] recommendation=${proposal.recommendation} artifact=${proposal.artifact_path}`,
+  );
 }
 
 async function runRevert(args: string[]) {

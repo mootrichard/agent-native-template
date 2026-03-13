@@ -27,7 +27,29 @@
     }
   ],
   "id": "docs-hygiene",
+  "proposal": {
+    "acceptance_criteria": [
+      "Keep repo policy and knowledge docs reachable from docs/index.md.",
+      "Keep doc freshness and metadata validators green."
+    ],
+    "hypothesis": "Tightening doc structure and freshness rules keeps the template easier for agents to traverse safely.",
+    "labels": [
+      "docs",
+      "knowledge-base"
+    ],
+    "project_key": "template",
+    "risk_tier": "safe",
+    "summary": "Keep the template's repo knowledge base structurally valid and recent.",
+    "title": "Improve docs hygiene automation",
+    "validation": [
+      "deno task validate",
+      "deno task score --vector docs-hygiene"
+    ]
+  },
   "promotion_rule": "non_regressing",
+  "scoring": {
+    "kind": "docs_hygiene"
+  },
   "summary": "Keep repository knowledge structurally valid and fresh.",
   "target": {
     "direction": "min",

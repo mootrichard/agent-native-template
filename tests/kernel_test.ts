@@ -94,6 +94,88 @@ Deno.test("score command writes docs-hygiene artifact", async () => {
   assert.equal(payload.failure_count, 0);
 });
 
+Deno.test("score command writes automation-harness-health artifact", async () => {
+  const artifactPath = join(await Deno.makeTempDir(), "automation-harness-health-score.json");
+  const result = await new Deno.Command("deno", {
+    args: [
+      "run",
+      "-A",
+      "./cmd/kernel.ts",
+      "score",
+      "--vector",
+      "automation-harness-health",
+      "--artifact-path",
+      artifactPath,
+    ],
+    cwd: root,
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
+  const payload = JSON.parse(await Deno.readTextFile(artifactPath));
+  assert.equal(payload.vector_id, "automation-harness-health");
+  assert.equal(payload.contract_pass, true);
+  assert.equal(payload.missing_contracts, 0);
+});
+
+Deno.test("propose command writes a change package for a failing score", async () => {
+  const tempRoot = join(await Deno.makeTempDir(), "proposal-repo");
+  await copyRepo(root, tempRoot);
+  const brokenDoc = join(tempRoot, "docs", "product-specs", "index.md");
+  const staleScoreArtifact = join(
+    tempRoot,
+    "docs",
+    "generated",
+    "improvement",
+    "docs-hygiene-score.json",
+  );
+  const original = await Deno.readTextFile(brokenDoc);
+  await Deno.writeTextFile(brokenDoc, original.replace(/^Last verified: .+\n/m, ""));
+  await Deno.remove(staleScoreArtifact).catch(() => undefined);
+
+  const artifactPath = join(
+    tempRoot,
+    "docs",
+    "generated",
+    "improvement",
+    "docs-hygiene-proposal.json",
+  );
+  const result = await new Deno.Command("deno", {
+    args: [
+      "run",
+      "-A",
+      "./cmd/kernel.ts",
+      "propose",
+      "--vector",
+      "docs-hygiene",
+      "--artifact-path",
+      artifactPath,
+    ],
+    cwd: tempRoot,
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+
+  try {
+    assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
+    const proposal = JSON.parse(await Deno.readTextFile(artifactPath));
+    assert.equal(proposal.recommendation, "create_change_package");
+    assert.equal(proposal.project.key, "template");
+    assert.equal(proposal.change.status, "draft");
+    assert.match(proposal.story.handoff_markdown, /## Improvement Summary/);
+
+    const changeRoot = join(tempRoot, proposal.change.path);
+    const changePayload = JSON.parse(await Deno.readTextFile(join(changeRoot, "change.json")));
+    assert.equal(changePayload.vector, "docs-hygiene");
+    await Deno.stat(join(changeRoot, "proposal.md"));
+    await Deno.stat(join(changeRoot, "design.md"));
+    await Deno.stat(join(changeRoot, "tasks.md"));
+    await Deno.stat(join(changeRoot, "specs", "docs-hygiene.md"));
+  } finally {
+    await Deno.remove(tempRoot, { recursive: true }).catch(() => undefined);
+  }
+});
+
 Deno.test("ledger summary reports counts", async () => {
   const tempDir = await Deno.makeTempDir();
   const ledgerDir = join(tempDir, "ledger");
@@ -173,6 +255,25 @@ Deno.test("experiment command can compare synthetic snapshot refs", async () => 
     await Deno.remove(sourceDir, { recursive: true }).catch(() => undefined);
   }
 });
+
+async function copyRepo(source: string, destination: string): Promise<void> {
+  await Deno.mkdir(destination, { recursive: true });
+  const result = await new Deno.Command("rsync", {
+    args: [
+      "-a",
+      "--delete",
+      "--exclude",
+      ".git",
+      "--exclude",
+      ".tmp",
+      `${source}/`,
+      `${destination}/`,
+    ],
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
+}
 
 async function createSnapshot(
   repoRoot: string,

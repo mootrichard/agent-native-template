@@ -1,15 +1,18 @@
 # ARCHITECTURE
-Owner: Repo Maintainers
-Last verified: 2026-03-12
 
-This document is a *map*, not a manual.
-It should stay relatively stable over time.
+Owner: Repo Maintainers
+Last verified: 2026-03-13
+
+This document is a _map_, not a manual. It should stay relatively stable over time.
 
 ## What this repo is
+
 An agent-first repository template with its own constitutional policy, executable scorecards,
-minimal runtime fixture, and append-only self-improvement loop.
+minimal runtime fixture, structured proposal or change-package handoff layer, and append-only
+self-improvement loop.
 
 ## Codemap (where is the thing?)
+
 - Constitutional layer:
   - `AGENTS.md`
   - `WORKFLOW.md`
@@ -26,6 +29,10 @@ minimal runtime fixture, and append-only self-improvement loop.
   - `cmd/kernel.ts`
   - `internal/kernel/`
   - `tests/`
+- Planning handoff layer:
+  - `projects/registry.json`
+  - `changes/`
+  - `.github/pull_request_template.md`
 - Runtime fixture:
   - `fixtures/runtime/main.ts`
   - `internal/runtimefixture/`
@@ -35,16 +42,22 @@ minimal runtime fixture, and append-only self-improvement loop.
   - `improvement/ledger/experiments/`
 
 ## Architectural invariants (must not drift)
+
 1. Keep `AGENTS.md` short and map-like; policy belongs in `WORKFLOW.md`.
 2. `docs/` remains the system of record for decisions, specs, and procedures.
 3. Scorecards stay machine-readable and conservative; promotion is non-regressing or stricter.
-4. Runtime observability is direct and local-first: structured logs, simple metrics, correlation ids.
-5. Experiment history is append-only and auditable.
+4. Runtime observability is direct and local-first: structured logs, simple metrics, correlation
+   ids.
+5. Proposal artifacts and change packages stay deterministic, repo-local, and reviewable.
+6. Experiment history is append-only and auditable.
 
 ## Cross-cutting concerns
+
 - Testing, linting, and score artifacts are product features for agents.
+- Project registry, change packages, and PR evidence scaffolding are product features for agents.
 - Runtime bootability is part of the template, not deferred to seeded projects.
 - Scheduled GC is report-only in v1 and exists to prevent drift, not to auto-merge code.
 
 ## Where to learn more
+
 Start at `docs/index.md`.
