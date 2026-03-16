@@ -1,6 +1,6 @@
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 
-import type { CommandResult, Guardrail, LedgerEntry, PromotionResult, Scorecard } from "./types.ts";
+import type { CommandResult, Guardrail, Scorecard } from "./types.ts";
 
 export async function findRepoRoot(start = Deno.cwd()): Promise<string> {
   let current = resolve(start);
@@ -198,105 +198,6 @@ function toNumber(value: unknown): number | undefined {
   return undefined;
 }
 
-export function evaluatePromotionRule(
-  rule: Scorecard["promotion_rule"],
-  direction: Scorecard["target"]["direction"],
-  baselineValue: unknown,
-  candidateValue: unknown,
-  guardrailsPassed: boolean,
-): PromotionResult {
-  if (!guardrailsPassed) {
-    return { passed: false, summary: "Candidate failed one or more guardrails." };
-  }
-  const baseline = toNumber(baselineValue);
-  const candidate = toNumber(candidateValue);
-  if (baseline === undefined || candidate === undefined) {
-    return { passed: false, summary: "Candidate target metric could not be evaluated." };
-  }
-
-  if (rule === "non_regressing") {
-    const passed = direction === "min" ? candidate <= baseline : candidate >= baseline;
-    return {
-      passed,
-      summary: passed
-        ? "Candidate is non-regressing and guardrails hold."
-        : "Candidate regressed on the target metric.",
-    };
-  }
-
-  const passed = direction === "min" ? candidate < baseline : candidate > baseline;
-  return {
-    passed,
-    summary: passed
-      ? "Candidate improved on the target metric and guardrails hold."
-      : "Candidate did not improve on the target metric.",
-  };
-}
-
-export function sanitizeSlug(value: string): string {
-  const slug = value.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
-  return slug || "value";
-}
-
-export async function uniqueJsonPath(dir: string, stem: string): Promise<string> {
-  await ensureDir(dir);
-  let candidate = join(dir, `${stem}.json`);
-  let suffix = 1;
-  while (await exists(candidate)) {
-    candidate = join(dir, `${stem}-${suffix}.json`);
-    suffix += 1;
-  }
-  return candidate;
-}
-
-export async function writeLedgerEntry(entry: LedgerEntry, ledgerDir: string): Promise<string> {
-  const path = await uniqueJsonPath(ledgerDir, entry.id);
-  await writeJson(path, entry);
-  return path;
-}
-
-export async function latestLedgerEntryPath(
-  ledgerDir: string,
-  vector?: string,
-): Promise<string | undefined> {
-  if (!await exists(ledgerDir)) {
-    return undefined;
-  }
-  const entries: string[] = [];
-  for await (const file of Deno.readDir(ledgerDir)) {
-    if (file.isFile && extname(file.name) === ".json") {
-      entries.push(join(ledgerDir, file.name));
-    }
-  }
-  entries.sort();
-  if (!vector) {
-    return entries.at(-1);
-  }
-  const filtered: string[] = [];
-  for (const path of entries) {
-    const payload = await readJson<Record<string, unknown>>(path);
-    if (payload.vector === vector) {
-      filtered.push(path);
-    }
-  }
-  return filtered.at(-1);
-}
-
-export async function gitChangedFiles(
-  root: string,
-  baselineRef: string,
-  candidateRef: string,
-): Promise<string[]> {
-  const result = await runCommand(["git", "diff", "--name-only", baselineRef, candidateRef], {
-    cwd: root,
-    timeoutMs: 30_000,
-  });
-  if (result.exit_code !== 0) {
-    return [];
-  }
-  return result.stdout.split("\n").filter((line) => line.trim() !== "");
-}
-
 export async function freePort(): Promise<number> {
   const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
   const { port } = listener.addr as Deno.NetAddr;
@@ -321,6 +222,14 @@ export function readNumber(value: unknown): number {
 
 export function readBoolean(value: unknown): boolean {
   return value === true;
+}
+
+export async function publishArtifact(sourcePath: string, destinationPath: string): Promise<void> {
+  if (!await exists(sourcePath)) {
+    throw new Error(`Artifact '${sourcePath}' does not exist.`);
+  }
+  await ensureDir(dirname(destinationPath));
+  await Deno.copyFile(sourcePath, destinationPath);
 }
 
 export function isSourceCandidate(path: string): boolean {

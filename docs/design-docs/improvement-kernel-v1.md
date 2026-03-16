@@ -1,42 +1,37 @@
 # Improvement kernel v1
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 ## Status
-Accepted
+Superseded
 
 ## Context
-The template already enforced docs hygiene, but it could not boot itself, score runtime behavior, compare candidate refs, or retain experiment history. Future agents would still need external chat context to know how improvement should work.
+This design introduced a harness-first improvement kernel into the baseline starter. It proved that
+repo-local scorecards, ledger entries, and proposal artifacts could be made mechanically checkable,
+but it also increased the default surface area and caused routine validation to touch tracked
+evidence paths.
 
 ## Decision
-Add a minimal self-improvement kernel made of:
-- one protected constitutional policy file (`WORKFLOW.md`)
-- machine-readable scorecards in `scorecards/`
-- a small TypeScript runtime fixture
-- baseline/score/experiment/promote/revert commands plus Bash entrypoints
-- an append-only ledger in `improvement/ledger/experiments/`
-- repo-local product specs, skills, and maintenance scripts
+Move the improvement-kernel idea out of the default starter contract.
+Keep only the baseline scorecards and runtime fixture in the template, and preserve the heavier
+governance ideas as an optional extension.
 
 ## Alternatives Considered
-- Build a generic adapter/plugin system now.
-  Rejected because the template needs auditable fixed vectors first.
-- Add a dashboard or external observability stack.
-  Rejected because the brief requires zero framework/cloud coupling and fast local loops.
+- Keep the harness-first kernel in the baseline starter.
+  Rejected because the default repo should optimize for elegant simplicity and clean routine loops.
 
 ## Consequences / Tradeoffs
-- The kernel stays intentionally small and explicit, but vector support is hard-coded for now.
-- Generated evidence becomes a first-class artifact that agents must maintain.
-- Runtime capability is real but intentionally minimal; seeded projects extend it later.
+- The advanced kernel remains available as a design pattern, but not as baseline code.
+- Routine validation becomes cleaner because transient evidence stays under `.tmp/`.
+- Seeded projects must add heavier governance only when they actually need it.
 
 ## Enforcement Plan
 - Protect policy and kernel files in `WORKFLOW.md`.
 - Validate docs structure with `scripts/validate-docs.sh`.
-- Encode executable vectors in `scorecards/*.json`.
-- Keep experiments append-only through JSON ledger entries.
+- Keep executable starter vectors in `scorecards/*.json`.
+- Preserve the optional extension in design docs rather than baseline tasks.
 
 ## Verification Notes
-- `deno task baseline --vector docs-hygiene`
 - `deno task score --vector docs-hygiene`
 - `deno task smoke`
 - `deno task score --vector runtime-boot`
-- `deno task experiment --vector docs-hygiene --candidate-ref <ref>`

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-./scripts/test.sh
+./scripts/validate-docs.sh
+deno test -A tests

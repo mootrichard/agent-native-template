@@ -1,11 +1,9 @@
 import { join } from "node:path";
 
 import {
-  ensureDir,
   exists,
   isoTimestamp,
   isSourceCandidate,
-  readJson,
   repoRelative,
   runCommand,
   writeJson,
@@ -18,7 +16,7 @@ export async function runDocGardening(
   const maxAgeDays = options.maxAgeDays ?? 180;
   const mode = options.mode ?? "warn";
   const artifactPath = options.artifactPath ??
-    join(root, "docs", "generated", "improvement", "gc-doc-gardening.json");
+    join(root, ".tmp", "improvement", "gc-doc-gardening.json");
   const tracked = await trackedDocs(root);
   const staleDocs: Array<Record<string, unknown>> = [];
   const missingMetadata: string[] = [];
@@ -92,7 +90,7 @@ export async function runFileSizeScan(
 ): Promise<Record<string, unknown>> {
   const maxLines = options.maxLines ?? 300;
   const artifactPath = options.artifactPath ??
-    join(root, "docs", "generated", "improvement", "gc-file-size-scan.json");
+    join(root, ".tmp", "improvement", "gc-file-size-scan.json");
   const result = await runCommand(["git", "ls-files"], { cwd: root, timeoutMs: 15_000 });
   if (result.exit_code !== 0) {
     throw new Error(result.stderr.trim() || "git ls-files failed.");
@@ -121,54 +119,6 @@ export async function runFileSizeScan(
     max_lines: maxLines,
     oversized_count: oversizedFiles.length,
     oversized_files: oversizedFiles,
-  };
-  await writeJson(artifactPath, payload);
-  return payload;
-}
-
-export async function runLedgerSummary(
-  root: string,
-  options: { ledgerDir?: string; artifactPath?: string } = {},
-): Promise<Record<string, unknown>> {
-  const ledgerDir = options.ledgerDir ?? join(root, "improvement", "ledger", "experiments");
-  const artifactPath = options.artifactPath ??
-    join(root, "docs", "generated", "improvement", "gc-ledger-summary.json");
-  await ensureDir(ledgerDir);
-
-  const byVector: Record<string, number> = {};
-  const byVerdict: Record<string, number> = {};
-  const recentRegressions: Array<Record<string, unknown>> = [];
-  const files: string[] = [];
-  for await (const entry of Deno.readDir(ledgerDir)) {
-    if (entry.isFile && entry.name.endsWith(".json")) {
-      files.push(join(ledgerDir, entry.name));
-    }
-  }
-  files.sort();
-  for (const path of files) {
-    const payload = await readJson<Record<string, unknown>>(path);
-    const vector = String(payload.vector ?? "unknown");
-    const verdict = String(payload.verdict ?? "unknown");
-    byVector[vector] = (byVector[vector] ?? 0) + 1;
-    byVerdict[verdict] = (byVerdict[verdict] ?? 0) + 1;
-    if (verdict === "revert") {
-      recentRegressions.push({
-        path: repoRelative(root, path),
-        summary: payload.summary,
-        vector,
-      });
-      if (recentRegressions.length > 5) {
-        recentRegressions.shift();
-      }
-    }
-  }
-  const payload: Record<string, unknown> = {
-    artifact_path: repoRelative(root, artifactPath),
-    by_vector: byVector,
-    by_verdict: byVerdict,
-    experiment_count: files.length,
-    generated_at: isoTimestamp(),
-    recent_regressions: recentRegressions,
   };
   await writeJson(artifactPath, payload);
   return payload;

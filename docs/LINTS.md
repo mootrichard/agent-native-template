@@ -1,7 +1,7 @@
 # Mechanical enforcement (lints, structural tests, doc checks)
 
 Owner: Repo Maintainers
-Last verified: 2026-03-13
+Last verified: 2026-03-16
 
 ## Goal
 
@@ -10,9 +10,9 @@ Encode constraints so agents can move fast without architectural drift.
 ## What we enforce
 
 - Docs metadata, reachability, design-doc indexing, and ExecPlan placement
-- Scorecard artifacts for `docs-hygiene`, `runtime-boot`, and `automation-harness-health`
-- Unit tests for kernel comparison, proposal, and ledger behavior
-- Runtime smoke validation as a separate fast check
+- Scorecard artifacts for `docs-hygiene` and `runtime-boot`
+- Unit tests for the baseline kernel and runtime fixture
+- Runtime smoke validation as a separate baseline check
 - File-size and stale-doc scans via executable GC scripts
 
 ## Docs lints (knowledge base hygiene)
@@ -29,11 +29,15 @@ Encode constraints so agents can move fast without architectural drift.
 ## Baseline enforcement commands
 
 - `deno task docs-lint` or `./scripts/validate-docs.sh`
-- `deno task test`
 - `deno task validate`
+- `deno task smoke`
+
+## Optional supporting checks
+
 - `deno task score --vector docs-hygiene`
 - `deno task score --vector runtime-boot`
-- `deno task score --vector automation-harness-health`
+- `deno task gc-docs`
+- `deno task gc-structure`
 
 ## How to evolve enforcement
 

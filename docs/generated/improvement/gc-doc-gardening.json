@@ -1,9 +1,0 @@
-{
-  "artifact_path": "docs/generated/improvement/gc-doc-gardening.json",
-  "generated_at": "2026-03-12T03:50:26Z",
-  "max_age_days": 180,
-  "missing_metadata": [],
-  "mode": "warn",
-  "stale_count": 0,
-  "stale_docs": []
-}

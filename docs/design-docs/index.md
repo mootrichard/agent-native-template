@@ -1,6 +1,6 @@
 # Design docs index
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 Design docs capture decisions that should outlive a single PR.
 
@@ -17,7 +17,8 @@ Design docs capture decisions that should outlive a single PR.
 
 ## Catalog
 - `core-beliefs.md` — Accepted, Verified (2026-02-12)
-- `improvement-kernel-v1.md` — Accepted, Verified (2026-03-12)
+- `improvement-kernel-v1.md` — Superseded, Verified (2026-03-16)
+- `optional-improvement-kernel.md` — Accepted, Verified (2026-03-16)
 
 ## Template
 - Title

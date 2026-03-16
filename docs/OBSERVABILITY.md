@@ -1,6 +1,6 @@
 # Observability (logs, metrics, traces) for agent validation
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 ## Why
 Agents need direct access to runtime signals to:
@@ -24,6 +24,7 @@ Dev environments should be:
 - Start it: `deno task dev`
 - Smoke it: `deno task smoke`
 - Score it: `deno task score --vector runtime-boot`
+- Publish evidence explicitly: `deno task publish-artifact --from <path> --to <path>`
 
 The fixture is template infrastructure, not a prescribed application stack. Seeded projects can replace or delete it once they have a real runtime.
 
@@ -31,6 +32,7 @@ The fixture is template infrastructure, not a prescribed application stack. Seed
 - Logs live under `.tmp/runtime/<run-id>/server.log`
 - Health lives at `/healthz`
 - Metrics live at `/metrics`
+- Smoke artifacts live under `.tmp/improvement/runtime-smoke.json` by default
 - Startup timing and request counters are included in health/metrics payloads
 - Each request gets an `X-Request-Id`
 
@@ -39,4 +41,5 @@ The fixture is template infrastructure, not a prescribed application stack. Seed
 - real traces for critical flows
 - domain-specific latency/error dashboards
 
-The template baseline is intentionally honest: structured logs, simple metrics, and correlation ids are present; a full tracing stack is not.
+The template baseline is intentionally honest: structured logs, simple metrics, and correlation ids
+are present; a full tracing stack is not.

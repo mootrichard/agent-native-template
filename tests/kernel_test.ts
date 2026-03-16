@@ -1,23 +1,10 @@
 import { join } from "node:path";
 import assert from "node:assert/strict";
 
-import { runExperiment, targetMetricFromEntry } from "../internal/kernel/experiment.ts";
-import { runLedgerSummary } from "../internal/kernel/gc.ts";
-import {
-  evaluateGuardrails,
-  evaluatePromotionRule,
-  latestLedgerEntryPath,
-  writeLedgerEntry,
-} from "../internal/kernel/helpers.ts";
-import { findRepoRoot } from "../internal/kernel/helpers.ts";
+import { evaluateGuardrails, findRepoRoot } from "../internal/kernel/helpers.ts";
 
 const root = await findRepoRoot();
-const SYNTHETIC_GIT_ENV = {
-  GIT_AUTHOR_NAME: "Codex Test",
-  GIT_AUTHOR_EMAIL: "codex-test@example.invalid",
-  GIT_COMMITTER_NAME: "Codex Test",
-  GIT_COMMITTER_EMAIL: "codex-test@example.invalid",
-} as const;
+const nestedValidate = Deno.env.get("CODEX_NESTED_VALIDATE") === "1";
 
 Deno.test("guardrail evaluation passes expected metrics", () => {
   const guardrails = [
@@ -32,300 +19,141 @@ Deno.test("guardrail evaluation passes expected metrics", () => {
   assert.deepEqual(result.details, []);
 });
 
-Deno.test("promotion rule treats equal min target as non-regressing", () => {
-  const result = evaluatePromotionRule("non_regressing", "min", 4, 4, true);
-  assert.equal(result.passed, true);
-});
-
-Deno.test("ledger writes remain append-only", async () => {
-  const ledgerDir = await Deno.makeTempDir();
-  const first = await writeLedgerEntry({
-    id: "example",
-    vector: "docs-hygiene",
-    baseline_ref: "HEAD",
-    candidate_ref: "candidate",
-    baseline: {},
-    candidate: {},
-    guardrails: { passed: true, details: [] },
-    verdict: "promote",
-    summary: "ok",
-    changed_files: [],
-    artifacts: [],
-    created_at: new Date().toISOString(),
-  }, ledgerDir);
-  const second = await writeLedgerEntry({
-    id: "example",
-    vector: "docs-hygiene",
-    baseline_ref: "HEAD",
-    candidate_ref: "candidate",
-    baseline: {},
-    candidate: {},
-    guardrails: { passed: true, details: [] },
-    verdict: "promote",
-    summary: "ok",
-    changed_files: [],
-    artifacts: [],
-    created_at: new Date().toISOString(),
-  }, ledgerDir);
-  assert.notEqual(first, second);
-});
-
-Deno.test("score command writes docs-hygiene artifact", async () => {
-  const artifactPath = join(await Deno.makeTempDir(), "docs-hygiene-score.json");
-  const result = await new Deno.Command("deno", {
-    args: [
-      "run",
-      "-A",
-      "./cmd/kernel.ts",
-      "score",
-      "--vector",
-      "docs-hygiene",
-      "--artifact-path",
-      artifactPath,
-    ],
-    cwd: root,
-    stdout: "piped",
-    stderr: "piped",
-  }).output();
-  assert.equal(result.code, 0);
-  const payload = JSON.parse(await Deno.readTextFile(artifactPath));
-  assert.equal(payload.vector_id, "docs-hygiene");
-  assert.equal(payload.exit_code, 0);
-  assert.equal(payload.failure_count, 0);
-});
-
-Deno.test("score command writes automation-harness-health artifact", async () => {
-  const artifactPath = join(await Deno.makeTempDir(), "automation-harness-health-score.json");
-  const result = await new Deno.Command("deno", {
-    args: [
-      "run",
-      "-A",
-      "./cmd/kernel.ts",
-      "score",
-      "--vector",
-      "automation-harness-health",
-      "--artifact-path",
-      artifactPath,
-    ],
-    cwd: root,
-    stdout: "piped",
-    stderr: "piped",
-  }).output();
-  assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
-  const payload = JSON.parse(await Deno.readTextFile(artifactPath));
-  assert.equal(payload.vector_id, "automation-harness-health");
-  assert.equal(payload.contract_pass, true);
-  assert.equal(payload.missing_contracts, 0);
-});
-
-Deno.test("propose command writes a change package for a failing score", async () => {
-  const tempRoot = join(await Deno.makeTempDir(), "proposal-repo");
-  await copyRepo(root, tempRoot);
-  const brokenDoc = join(tempRoot, "docs", "product-specs", "index.md");
-  const staleScoreArtifact = join(
-    tempRoot,
-    "docs",
-    "generated",
-    "improvement",
-    "docs-hygiene-score.json",
-  );
-  const original = await Deno.readTextFile(brokenDoc);
-  await Deno.writeTextFile(brokenDoc, original.replace(/^Last verified: .+\n/m, ""));
-  await Deno.remove(staleScoreArtifact).catch(() => undefined);
-
-  const artifactPath = join(
-    tempRoot,
-    "docs",
-    "generated",
-    "improvement",
-    "docs-hygiene-proposal.json",
-  );
-  const result = await new Deno.Command("deno", {
-    args: [
-      "run",
-      "-A",
-      "./cmd/kernel.ts",
-      "propose",
-      "--vector",
-      "docs-hygiene",
-      "--artifact-path",
-      artifactPath,
-    ],
-    cwd: tempRoot,
-    stdout: "piped",
-    stderr: "piped",
-  }).output();
-
+Deno.test({
+  name: "validate task stays clean in a fresh working copy",
+  ignore: nestedValidate,
+  fn: async () => {
+  const tempRoot = await copyWorkingTree(root);
   try {
-    assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
-    const proposal = JSON.parse(await Deno.readTextFile(artifactPath));
-    assert.equal(proposal.recommendation, "create_change_package");
-    assert.equal(proposal.project.key, "template");
-    assert.equal(proposal.change.status, "draft");
-    assert.match(proposal.story.handoff_markdown, /## Improvement Summary/);
+    const result = await runTask(tempRoot, ["validate"], {
+      CODEX_NESTED_VALIDATE: "1",
+    });
+    assert.equal(result.code, 0, decode(result.stderr));
+    await assertCleanWorktree(tempRoot);
+  } finally {
+    await Deno.remove(tempRoot, { recursive: true }).catch(() => undefined);
+  }
+  },
+});
 
-    const changeRoot = join(tempRoot, proposal.change.path);
-    const changePayload = JSON.parse(await Deno.readTextFile(join(changeRoot, "change.json")));
-    assert.equal(changePayload.vector, "docs-hygiene");
-    await Deno.stat(join(changeRoot, "proposal.md"));
-    await Deno.stat(join(changeRoot, "design.md"));
-    await Deno.stat(join(changeRoot, "tasks.md"));
-    await Deno.stat(join(changeRoot, "specs", "docs-hygiene.md"));
+Deno.test("smoke task writes transient evidence and keeps the repo clean", async () => {
+  const tempRoot = await copyWorkingTree(root);
+  try {
+    const result = await runTask(tempRoot, ["smoke"], {
+      RUN_ID: `test-smoke-${Date.now()}`,
+    });
+    assert.equal(result.code, 0, decode(result.stderr));
+    const payload = JSON.parse(
+      await Deno.readTextFile(join(tempRoot, ".tmp", "improvement", "runtime-smoke.json")),
+    );
+    assert.equal(payload.smoke_pass, true);
+    assert.equal(payload.health_status, 200);
+    await assertCleanWorktree(tempRoot);
   } finally {
     await Deno.remove(tempRoot, { recursive: true }).catch(() => undefined);
   }
 });
 
-Deno.test("ledger summary reports counts", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const ledgerDir = join(tempDir, "ledger");
-  await Deno.mkdir(ledgerDir, { recursive: true });
-  await Deno.writeTextFile(
-    join(ledgerDir, "one.json"),
-    JSON.stringify({
-      vector: "docs-hygiene",
-      verdict: "promote",
-    }),
-  );
-  await Deno.writeTextFile(
-    join(ledgerDir, "two.json"),
-    JSON.stringify({
-      vector: "runtime-boot",
-      verdict: "revert",
-      summary: "regressed",
-    }),
-  );
-  const artifactPath = join(tempDir, "ledger-summary.json");
-  const payload = await runLedgerSummary(root, { ledgerDir, artifactPath });
-  assert.equal(payload.experiment_count, 2);
-  assert.equal((payload.by_verdict as Record<string, number>).promote, 1);
-  assert.equal((payload.by_verdict as Record<string, number>).revert, 1);
-});
-
-Deno.test("experiment command can compare synthetic snapshot refs", async () => {
-  const stamp = `${Date.now()}`;
-  const baselineRef = `codex/test-baseline-${stamp}`;
-  const candidateRef = `codex/test-candidate-${stamp}`;
-  const sourceDir = join(root, ".tmp", `test-experiment-source-${stamp}`);
-  await Deno.mkdir(sourceDir, { recursive: true });
-  await new Deno.Command("rsync", {
-    args: ["-a", "--delete", "--exclude", ".git", "--exclude", ".tmp", `${root}/`, `${sourceDir}/`],
-    stdout: "null",
-    stderr: "null",
-  }).output();
-  await Deno.writeTextFile(
-    join(sourceDir, "docs", "generated", "improvement", "phase-0-baseline.md"),
-    `${await Deno.readTextFile(
-      join(sourceDir, "docs", "generated", "improvement", "phase-0-baseline.md"),
-    )}\n\nSynthetic experiment note.\n`,
-  );
-
-  const baselineCommit = await createSnapshot(root, root, "HEAD", baselineRef, "baseline snapshot");
-  await createSnapshot(root, sourceDir, baselineCommit, candidateRef, "candidate snapshot");
-
+Deno.test("runtime-boot score writes to .tmp by default and keeps the repo clean", async () => {
+  const tempRoot = await copyWorkingTree(root);
   try {
-    const { entry, ledgerPath, promotable } = await runExperiment(root, {
-      vector: "docs-hygiene",
-      baselineRef,
-      candidateRef,
-    });
-    assert.equal(promotable, true);
-    assert.equal(entry.verdict, "promote");
-    assert.equal(targetMetricFromEntry(entry), "failure_count");
-    assert.equal(
-      await latestLedgerEntryPath(
-        join(root, "improvement", "ledger", "experiments"),
-        "docs-hygiene",
-      ),
-      ledgerPath,
+    const result = await runTask(tempRoot, ["score", "--vector", "runtime-boot"]);
+    assert.equal(result.code, 0, decode(result.stderr));
+    const payload = JSON.parse(
+      await Deno.readTextFile(join(tempRoot, ".tmp", "improvement", "runtime-boot-score.json")),
     );
+    assert.equal(payload.vector_id, "runtime-boot");
+    assert.equal(payload.pass, true);
+    await assertCleanWorktree(tempRoot);
   } finally {
-    await new Deno.Command("git", {
-      args: ["update-ref", "-d", `refs/heads/${baselineRef}`],
-      cwd: root,
-      stdout: "null",
-      stderr: "null",
-    }).output();
-    await new Deno.Command("git", {
-      args: ["update-ref", "-d", `refs/heads/${candidateRef}`],
-      cwd: root,
-      stdout: "null",
-      stderr: "null",
-    }).output();
-    await Deno.remove(sourceDir, { recursive: true }).catch(() => undefined);
+    await Deno.remove(tempRoot, { recursive: true }).catch(() => undefined);
   }
 });
 
-async function copyRepo(source: string, destination: string): Promise<void> {
-  await Deno.mkdir(destination, { recursive: true });
-  const result = await new Deno.Command("rsync", {
+Deno.test("publish-artifact is the explicit step that creates versioned evidence", async () => {
+  const tempRoot = await copyWorkingTree(root);
+  try {
+    const scoreResult = await runTask(tempRoot, ["score", "--vector", "docs-hygiene"]);
+    assert.equal(scoreResult.code, 0, decode(scoreResult.stderr));
+
+    const publishResult = await runTask(tempRoot, [
+      "publish-artifact",
+      "--from",
+      ".tmp/improvement/docs-hygiene-score.json",
+      "--to",
+      "docs/generated/improvement/docs-hygiene-score.json",
+    ]);
+    assert.equal(publishResult.code, 0, decode(publishResult.stderr));
+
+    await Deno.stat(join(tempRoot, "docs", "generated", "improvement", "docs-hygiene-score.json"));
+    const status = await gitStatus(tempRoot);
+    assert.match(status, /docs\/generated\/improvement\/docs-hygiene-score\.json/);
+  } finally {
+    await Deno.remove(tempRoot, { recursive: true }).catch(() => undefined);
+  }
+});
+
+async function copyWorkingTree(source: string): Promise<string> {
+  const destination = join(await Deno.makeTempDir(), "repo");
+  const copyResult = await new Deno.Command("bash", {
     args: [
-      "-a",
-      "--delete",
-      "--exclude",
-      ".git",
-      "--exclude",
-      ".tmp",
-      `${source}/`,
-      `${destination}/`,
+      "-lc",
+      'mkdir -p "$2" && cp -R "$1"/. "$2" && rm -rf "$2/.git" "$2/.tmp"',
+      "bash",
+      source,
+      destination,
     ],
     stdout: "piped",
     stderr: "piped",
   }).output();
-  assert.equal(result.code, 0, new TextDecoder().decode(result.stderr));
+  assert.equal(copyResult.code, 0, decode(copyResult.stderr));
+
+  await runGit(destination, ["init", "-q"]);
+  await runGit(destination, ["config", "user.name", "Codex Test"]);
+  await runGit(destination, ["config", "user.email", "codex-test@example.invalid"]);
+  await runGit(destination, ["add", "-A"]);
+  await runGit(destination, ["commit", "-qm", "snapshot"]);
+  return destination;
 }
 
-async function createSnapshot(
+async function runTask(
   repoRoot: string,
-  worktree: string,
-  parentRef: string,
-  refName: string,
-  message: string,
-): Promise<string> {
-  const indexFile = join(repoRoot, ".tmp", `${refName.replaceAll("/", "-")}.index`);
-  await Deno.remove(indexFile).catch(() => undefined);
-  await runGit(repoRoot, worktree, indexFile, ["read-tree", parentRef]);
-  await runGit(repoRoot, worktree, indexFile, ["add", "-A", "."]);
-  const tree = (await runGit(repoRoot, worktree, indexFile, ["write-tree"])).trim();
-  const commit =
-    (await runGit(repoRoot, worktree, indexFile, ["commit-tree", tree, "-p", parentRef], message))
-      .trim();
-  await Deno.remove(indexFile).catch(() => undefined);
-  await new Deno.Command("git", {
-    args: ["update-ref", `refs/heads/${refName}`, commit],
-    cwd: repoRoot,
-    stdout: "null",
-    stderr: "null",
-  }).output();
-  return commit;
-}
-
-async function runGit(
-  repoRoot: string,
-  worktree: string,
-  indexFile: string,
   args: string[],
-  stdin?: string,
-): Promise<string> {
-  const child = new Deno.Command("git", {
-    args,
+  env: Record<string, string> = {},
+): Promise<Deno.CommandOutput> {
+  return await new Deno.Command("deno", {
+    args: ["task", ...args],
     cwd: repoRoot,
     env: {
       ...Deno.env.toObject(),
-      ...SYNTHETIC_GIT_ENV,
-      GIT_INDEX_FILE: indexFile,
-      GIT_WORK_TREE: worktree,
+      ...env,
     },
-    stdin: stdin ? "piped" : "null",
     stdout: "piped",
     stderr: "piped",
-  }).spawn();
-  if (stdin) {
-    const writer = child.stdin.getWriter();
-    await writer.write(new TextEncoder().encode(stdin));
-    await writer.close();
-  }
-  const output = await child.output();
-  assert.equal(output.code, 0, new TextDecoder().decode(output.stderr));
-  return new TextDecoder().decode(output.stdout);
+  }).output();
+}
+
+async function assertCleanWorktree(repoRoot: string): Promise<void> {
+  const status = await gitStatus(repoRoot);
+  assert.equal(status.trim(), "");
+}
+
+async function gitStatus(repoRoot: string): Promise<string> {
+  const output = await runGit(repoRoot, ["status", "--short"]);
+  return decode(output.stdout);
+}
+
+async function runGit(repoRoot: string, args: string[]): Promise<Deno.CommandOutput> {
+  const output = await new Deno.Command("git", {
+    args,
+    cwd: repoRoot,
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  assert.equal(output.code, 0, decode(output.stderr));
+  return output;
+}
+
+function decode(bytes: Uint8Array): string {
+  return new TextDecoder().decode(bytes);
 }

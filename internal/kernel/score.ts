@@ -21,11 +21,7 @@ import {
 import type { Scorecard, SmokeArtifactInput } from "./types.ts";
 
 export function defaultScoreArtifactPath(root: string, vector: string): string {
-  return join(root, "docs", "generated", "improvement", `${vector}-score.json`);
-}
-
-export function defaultBaselineArtifactPath(root: string, vector: string): string {
-  return join(root, "docs", "generated", "improvement", `${vector}-baseline.json`);
+  return join(root, ".tmp", "improvement", `${vector}-score.json`);
 }
 
 export async function scoreVector(
@@ -34,28 +30,14 @@ export async function scoreVector(
   artifactPath = defaultScoreArtifactPath(root, vector),
 ): Promise<Record<string, unknown>> {
   const scorecard = await loadScorecard(root, vector);
-  const scoringKind = scorecard.scoring?.kind ?? legacyScoringKind(scorecard.id);
+  const scoringKind = scorecard.scoring.kind;
   if (scoringKind === "docs_hygiene") {
     return await scoreDocsHygiene(root, scorecard, artifactPath);
   }
   if (scoringKind === "runtime_boot") {
     return await scoreRuntimeBoot(root, scorecard, artifactPath);
   }
-  if (scoringKind === "artifact_json") {
-    return await scoreArtifactJson(root, scorecard, artifactPath);
-  }
   throw new Error(`Unsupported scoring kind '${scoringKind}' for scorecard '${scorecard.id}'.`);
-}
-
-function legacyScoringKind(scorecardId: string): string {
-  switch (scorecardId) {
-    case "docs-hygiene":
-      return "docs_hygiene";
-    case "runtime-boot":
-      return "runtime_boot";
-    default:
-      return "";
-  }
 }
 
 async function scoreDocsHygiene(
@@ -95,7 +77,7 @@ async function scoreRuntimeBoot(
   scorecard: Scorecard,
   artifactPath: string,
 ): Promise<Record<string, unknown>> {
-  const smokeArtifact = join(root, "docs", "generated", "improvement", "runtime-smoke.json");
+  const smokeArtifact = join(root, ".tmp", "improvement", "runtime-smoke.json");
   const port = await freePort();
   const docsResult = await runCommand(["./scripts/validate-docs.sh"], {
     cwd: root,
@@ -139,66 +121,6 @@ async function scoreRuntimeBoot(
   const guardrails = evaluateGuardrails(scorecard.guardrails, artifact);
   artifact.guardrails = guardrails;
   artifact.pass = smokeResult.exit_code === 0 && docsResult.exit_code === 0 && guardrails.passed;
-  await writeJson(artifactPath, artifact);
-  return artifact;
-}
-
-async function scoreArtifactJson(
-  root: string,
-  scorecard: Scorecard,
-  artifactPath: string,
-): Promise<Record<string, unknown>> {
-  const result = await runCommand(scorecard.evaluator.command, {
-    cwd: root,
-    timeoutMs: scorecard.budget_seconds * 1000,
-  });
-  const sourceArtifactPath = resolveRepoPath(root, scorecard.scoring?.artifact_path);
-  const sourceArtifact = sourceArtifactPath && await exists(sourceArtifactPath)
-    ? await readJson<Record<string, unknown>>(sourceArtifactPath).catch(() => ({}))
-    : {};
-  const artifact: Record<string, unknown> = {
-    ...sourceArtifact,
-    artifact_path: repoRelative(root, artifactPath),
-    artifact_written: !!sourceArtifactPath && await exists(sourceArtifactPath),
-    command: scorecard.evaluator.command,
-    duration_ms: result.duration_ms,
-    exit_code: result.exit_code,
-    pass: false,
-    stderr_tail: tailLines(result.stderr),
-    stdout_tail: tailLines(result.stdout),
-    target_direction: scorecard.target.direction,
-    target_metric: scorecard.target.metric,
-    timestamp: isoTimestamp(),
-    vector_id: scorecard.id,
-  };
-  const guardrails = evaluateGuardrails(scorecard.guardrails, artifact);
-  artifact.guardrails = guardrails;
-  artifact.pass = result.exit_code === 0 && artifact.artifact_written === true && guardrails.passed;
-  await writeJson(artifactPath, artifact);
-  return artifact;
-}
-
-export async function baselineVector(
-  root: string,
-  vector: string,
-  artifactPath = defaultBaselineArtifactPath(root, vector),
-): Promise<Record<string, unknown>> {
-  const scoreArtifact = await scoreVector(root, vector);
-  const headResult = await runCommand(["git", "rev-parse", "HEAD"], {
-    cwd: root,
-    timeoutMs: 10_000,
-  });
-  const targetMetric = readString(scoreArtifact.target_metric);
-  const artifact: Record<string, unknown> = {
-    artifact_path: repoRelative(root, artifactPath),
-    baseline_ref: headResult.exit_code === 0 ? headResult.stdout.trim() : "HEAD",
-    pass: scoreArtifact.pass,
-    score_artifact: readString(scoreArtifact.artifact_path),
-    target_metric: targetMetric,
-    target_value: scoreArtifact[targetMetric],
-    timestamp: isoTimestamp(),
-    vector_id: vector,
-  };
   await writeJson(artifactPath, artifact);
   return artifact;
 }

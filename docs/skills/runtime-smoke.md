@@ -1,17 +1,18 @@
 # Runtime Smoke Skill
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 ## When to use it
 Use this skill when touching `fixtures/runtime/**`, `internal/runtimefixture/**`, the startup path, the health endpoint, or observability docs.
 
 ## Exact commands
+- `deno task validate`
 - `deno task smoke`
 - `deno task score --vector runtime-boot`
 - `PORT=8010 deno task dev`
 
 ## Expected observations
-- The smoke run writes `docs/generated/improvement/runtime-smoke.json`.
+- The smoke run writes `.tmp/improvement/runtime-smoke.json`.
 - `.tmp/runtime/<run-id>/server.log` contains structured JSON logs.
 - `/healthz` returns `status: ok` and startup timing.
 

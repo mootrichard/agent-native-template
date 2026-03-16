@@ -1,7 +1,7 @@
 # Runtime Boot Scorecard
 
 Owner: Repo Maintainers
-Last verified: 2026-03-13
+Last verified: 2026-03-16
 
 ## What this vector measures
 
@@ -28,14 +28,13 @@ signals. It measures `startup_ms` with direction `min`.
 
 ## Artifacts
 
-- `docs/generated/improvement/runtime-smoke.json`
-- `docs/generated/improvement/runtime-boot-score.json`
+- `.tmp/improvement/runtime-smoke.json`
+- `.tmp/improvement/runtime-boot-score.json`
 
 ## Operating notes
 
 - Run `deno task smoke` for a fast runtime probe.
-- Run `deno task score --vector runtime-boot` for the score artifact used by the improvement kernel.
-- Run `deno task propose --vector runtime-boot` when runtime failures or regressions should become a
-  bounded change package.
-- Runtime scoring keeps structured logs, endpoint responses, and the final score artifact as
-  evidence.
+- Run `deno task score --vector runtime-boot` for a transient runtime score artifact.
+- Publish a copy explicitly only when the latest runtime evidence should be versioned.
+- Runtime scoring keeps structured logs, endpoint responses, and the final score artifact as local
+  evidence under `.tmp/`.

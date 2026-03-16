@@ -21,24 +21,22 @@ jobs:
       - name: Install baseline prerequisites
         run: deno task install
 
-      - name: Run tests
-        run: deno task test
-
-      - name: Run validation
+      - name: Run canonical validation
         run: deno task validate
-
-      - name: Score docs hygiene
-        run: deno task score --vector docs-hygiene
 
       - name: Smoke runtime fixture
         run: deno task smoke
 
-      - name: Score runtime boot
-        run: deno task score --vector runtime-boot
+      - name: Verify clean worktree after baseline commands
+        run: |
+          if [[ -n "$(git status --short)" ]]; then
+            git status --short
+            exit 1
+          fi
 
-      - name: Upload improvement artifacts
+      - name: Upload transient artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: improvement-artifacts
-          path: docs/generated/improvement/
+          name: transient-artifacts
+          path: .tmp/improvement/

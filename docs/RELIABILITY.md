@@ -1,6 +1,6 @@
 # Reliability
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 ## Reliability posture
 - Prefer designs that fail safely and visibly.
@@ -16,10 +16,12 @@ Last verified: 2026-03-12
 - Startup health checks
 - Timeouts with sane defaults in smoke/score scripts
 - Visible request ids and structured logs for debugging
-- Conservative failure handling for promotion decisions
+- Transient evidence by default so routine validation does not dirty the repo
 
 ## Agent workflows
 - Reliability changes must include:
   - a measurable target,
   - evidence (logs/metrics/artifacts) that target is met,
   - an explanation of whether the change belongs in the default fast loop or a separate scorecard.
+- Runtime smoke artifacts default to `.tmp/improvement/runtime-smoke.json`.
+- Runtime score artifacts default to `.tmp/improvement/runtime-boot-score.json`.

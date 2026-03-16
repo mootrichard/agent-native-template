@@ -1,29 +1,11 @@
-## Improvement Summary
+## Summary
 
-Vector
-
-Summary
-
-## Baseline
-
-Metric
-
-## Candidate
-
-Metric
-
-## Guardrails
-
-Scorecards and other checks
+What changed and why?
 
 ## Validation
 
-Commands run
+What did you run?
 
-## Evidence
+## Notes
 
-Artifact paths
-
-## Governance
-
-Risk tier and approval requirement
+Anything reviewers should watch for?

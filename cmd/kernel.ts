@@ -1,17 +1,15 @@
 import { join } from "node:path";
 
-import { runExperiment, targetMetricFromEntry } from "../internal/kernel/experiment.ts";
-import { runDocGardening, runFileSizeScan, runLedgerSummary } from "../internal/kernel/gc.ts";
-import { defaultProposalArtifactPath, proposalForVector } from "../internal/kernel/proposal.ts";
+import { runDocGardening, runFileSizeScan } from "../internal/kernel/gc.ts";
 import {
   findRepoRoot,
   freePort,
+  publishArtifact,
   readString,
   repoRelative,
   resolveRepoPath,
 } from "../internal/kernel/helpers.ts";
-import { promoteLatest, revertLatest } from "../internal/kernel/promotion.ts";
-import { baselineVector, scoreVector, writeSmokeArtifact } from "../internal/kernel/score.ts";
+import { defaultScoreArtifactPath, scoreVector, writeSmokeArtifact } from "../internal/kernel/score.ts";
 
 interface ParsedFlags {
   positionals: string[];
@@ -28,23 +26,8 @@ if (Deno.args.length === 0) {
 const [command, ...rest] = Deno.args;
 try {
   switch (command) {
-    case "baseline":
-      await runBaseline(rest);
-      break;
     case "score":
       await runScore(rest);
-      break;
-    case "experiment":
-      await runExperimentCommand(rest);
-      break;
-    case "promote":
-      await runPromote(rest);
-      break;
-    case "propose":
-      await runPropose(rest);
-      break;
-    case "revert":
-      await runRevert(rest);
       break;
     case "gc-docs":
       await runGCDocs(rest);
@@ -52,8 +35,8 @@ try {
     case "gc-structure":
       await runGCStructure(rest);
       break;
-    case "gc-ledger":
-      await runGCLedger(rest);
+    case "publish-artifact":
+      await runPublishArtifact(rest);
       break;
     case "free-port":
       console.log(await freePort());
@@ -72,7 +55,7 @@ try {
 
 function usage() {
   console.error(
-    "usage: deno run -A ./cmd/kernel.ts <baseline|score|experiment|promote|propose|revert|gc-docs|gc-structure|gc-ledger|free-port|write-smoke-artifact> [...]",
+    "usage: deno run -A ./cmd/kernel.ts <score|gc-docs|gc-structure|publish-artifact|free-port|write-smoke-artifact> [...]",
   );
 }
 
@@ -112,20 +95,11 @@ function booleanFlag(flags: ParsedFlags, key: string): boolean {
   return flags.values[key] === true;
 }
 
-async function runBaseline(args: string[]) {
-  const flags = parseFlags(args);
-  const vector = stringFlag(flags, "vector", true)!;
-  const artifactPath = resolveRepoPath(root, stringFlag(flags, "artifact-path"));
-  const artifact = await baselineVector(root, vector, artifactPath);
-  console.log(
-    `[baseline:${vector}] pass=${artifact.pass} ${artifact.target_metric}=${artifact.target_value} artifact=${artifact.artifact_path}`,
-  );
-}
-
 async function runScore(args: string[]) {
   const flags = parseFlags(args);
   const vector = stringFlag(flags, "vector", true)!;
-  const artifactPath = resolveRepoPath(root, stringFlag(flags, "artifact-path"));
+  const artifactPath = resolveRepoPath(root, stringFlag(flags, "artifact-path")) ??
+    defaultScoreArtifactPath(root, vector);
   const artifact = await scoreVector(root, vector, artifactPath);
   const targetMetric = readString(artifact.target_metric);
   console.log(
@@ -136,64 +110,6 @@ async function runScore(args: string[]) {
   if (artifact.pass !== true) {
     throw new Error(`Scorecard ${vector} failed.`);
   }
-}
-
-async function runExperimentCommand(args: string[]) {
-  const flags = parseFlags(args);
-  const vector = stringFlag(flags, "vector", true)!;
-  const candidateRef = stringFlag(flags, "candidate-ref", true)!;
-  const baselineRef = stringFlag(flags, "baseline-ref") ?? "HEAD";
-  const { entry, ledgerPath, promotable } = await runExperiment(root, {
-    vector,
-    baselineRef,
-    candidateRef,
-  });
-  const targetMetric = targetMetricFromEntry(entry);
-  console.log(
-    `[experiment:${entry.vector}] verdict=${entry.verdict} ${targetMetric}: baseline=${
-      entry.baseline[targetMetric]
-    } candidate=${entry.candidate[targetMetric]} ledger=${repoRelative(root, ledgerPath)}`,
-  );
-  if (!promotable) {
-    throw new Error("Candidate is not promotable.");
-  }
-}
-
-async function runPromote(args: string[]) {
-  const flags = parseFlags(args);
-  const message = await promoteLatest(root, {
-    ledgerPath: resolveRepoPath(root, stringFlag(flags, "ledger")),
-    vector: stringFlag(flags, "vector"),
-  });
-  console.log(message);
-}
-
-async function runPropose(args: string[]) {
-  const flags = parseFlags(args);
-  const vector = stringFlag(flags, "vector", true)!;
-  const artifactPath = resolveRepoPath(root, stringFlag(flags, "artifact-path")) ??
-    defaultProposalArtifactPath(root, vector);
-  const proposal = await proposalForVector(root, vector, {
-    artifactPath,
-    scoreArtifactPath: resolveRepoPath(root, stringFlag(flags, "score-artifact")),
-    baselineArtifactPath: resolveRepoPath(root, stringFlag(flags, "baseline-artifact")),
-    projectKey: stringFlag(flags, "project"),
-  });
-  console.log(
-    `[proposal:${proposal.vector}] recommendation=${proposal.recommendation} artifact=${proposal.artifact_path}`,
-  );
-}
-
-async function runRevert(args: string[]) {
-  const flags = parseFlags(args);
-  const artifact = await revertLatest(root, {
-    ledgerPath: resolveRepoPath(root, stringFlag(flags, "ledger")),
-    vector: stringFlag(flags, "vector"),
-    deleteBranch: booleanFlag(flags, "delete-branch"),
-  });
-  console.log(
-    `Recorded revert artifact at ${artifact.artifact_path} (deleted_branch=${artifact.deleted_branch})`,
-  );
 }
 
 async function runGCDocs(args: string[]) {
@@ -221,15 +137,12 @@ async function runGCStructure(args: string[]) {
   );
 }
 
-async function runGCLedger(args: string[]) {
+async function runPublishArtifact(args: string[]) {
   const flags = parseFlags(args);
-  const payload = await runLedgerSummary(root, {
-    ledgerDir: resolveRepoPath(root, stringFlag(flags, "ledger-dir")),
-    artifactPath: resolveRepoPath(root, stringFlag(flags, "artifact-path")),
-  });
-  console.log(
-    `[gc-ledger] experiment_count=${payload.experiment_count} artifact=${payload.artifact_path}`,
-  );
+  const sourcePath = resolveRepoPath(root, stringFlag(flags, "from", true))!;
+  const destinationPath = resolveRepoPath(root, stringFlag(flags, "to", true))!;
+  await publishArtifact(sourcePath, destinationPath);
+  console.log(`[publish-artifact] ${repoRelative(root, sourcePath)} -> ${repoRelative(root, destinationPath)}`);
 }
 
 async function runWriteSmokeArtifact(args: string[]) {

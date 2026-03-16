@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_ID="${RUN_ID:-smoke-$(date -u +%Y%m%dT%H%M%SZ)}"
-ARTIFACT_PATH="${ARTIFACT_PATH:-$ROOT_DIR/docs/generated/improvement/runtime-smoke.json}"
+ARTIFACT_PATH="${ARTIFACT_PATH:-$ROOT_DIR/.tmp/improvement/runtime-smoke.json}"
 RUN_DIR="$ROOT_DIR/.tmp/runtime/$RUN_ID"
 LOG_PATH="$RUN_DIR/server.log"
 HEALTH_PATH="$RUN_DIR/healthz.json"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required_bins=(deno git curl)
+required_bins=(bash deno git curl)
 missing=()
 
 for bin in "${required_bins[@]}"; do
@@ -16,6 +16,7 @@ if ((${#missing[@]} > 0)); then
 fi
 
 printf 'Verified prerequisites:\n'
+printf -- '- bash: %s\n' "$(bash --version | head -n 1)"
 printf -- '- deno: %s\n' "$(deno --version | head -n 1)"
 printf -- '- git: %s\n' "$(git --version 2>&1)"
 printf -- '- curl: %s\n' "$(curl --version | head -n 1)"

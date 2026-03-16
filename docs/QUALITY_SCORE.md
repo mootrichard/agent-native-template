@@ -1,30 +1,28 @@
 # Quality score (what “good” means here)
 
 Owner: Repo Maintainers
-Last verified: 2026-03-13
+Last verified: 2026-03-16
 
 This repo optimizes for agent throughput without decay.
 
 ## The “quality equation”
 
-Quality = executable scorecards + legible boundaries + safe defaults + durable evidence
+Quality = fast validation + legible boundaries + safe defaults + explicit evidence publishing
 
 ## Guardrails we aim to encode
 
 1. **High test coverage of changed behavior**
-   - Kernel logic, runtime smoke behavior, and ledger summaries have direct tests.
+   - Kernel logic, runtime smoke behavior, and runtime responses have direct tests.
 2. **Small, well-namespaced files**
    - Directory structure is a navigation interface for agents.
 3. **Fast checks**
-   - `deno task test` and `deno task validate` stay cheap enough for repeated local use.
+   - `deno task validate` stays cheap enough for repeated local use.
 4. **Determinism**
    - Artifacts use UTC timestamps, stable JSON keys, and explicit paths.
-5. **Evidence-based PRs**
-   - Scorecards, smoke artifacts, and ledger entries make validation inspectable.
-6. **Structured handoffs**
-   - Proposal artifacts, change packages, and PR templates keep planning or review context explicit.
-7. **Conservative promotion**
-   - `non_regressing` is the default rule until a stronger case exists.
+5. **Transient-by-default evidence**
+   - Routine checks write under `.tmp/` and keep the worktree clean.
+6. **Explicit publication**
+   - Versioned generated artifacts exist only when someone intentionally publishes them.
 
 ## What to do when quality is missing
 

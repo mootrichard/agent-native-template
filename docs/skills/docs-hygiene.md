@@ -1,18 +1,18 @@
 # Docs Hygiene Skill
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 ## When to use it
 Use this skill when changing policy docs, indexes, design docs, or any repo knowledge-base content.
 
 ## Exact commands
+- `deno task validate`
 - `deno task docs-lint`
 - `deno task score --vector docs-hygiene`
-- `deno task baseline --vector docs-hygiene`
 
 ## Expected observations
 - Docs metadata, reachability, design-doc indexing, and ExecPlan placement all pass.
-- `docs/generated/improvement/docs-hygiene-score.json` is written.
+- `.tmp/improvement/docs-hygiene-score.json` is written when the score command runs.
 
 ## Common failures
 - Missing `Owner:` or `Last verified:`

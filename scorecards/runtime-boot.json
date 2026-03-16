@@ -35,27 +35,6 @@
     }
   ],
   "id": "runtime-boot",
-  "proposal": {
-    "acceptance_criteria": [
-      "Keep the runtime fixture locally bootable without framework or cloud dependencies.",
-      "Preserve direct evidence for health, root response, metrics, and startup latency."
-    ],
-    "hypothesis": "Tightening the fixture and smoke path keeps seeded repos observable before app-specific code replaces the template runtime.",
-    "labels": [
-      "runtime",
-      "observability"
-    ],
-    "project_key": "template",
-    "risk_tier": "moderate",
-    "summary": "Keep the template's runtime fixture bootable with direct evidence.",
-    "title": "Improve runtime boot reliability",
-    "validation": [
-      "deno task smoke",
-      "deno task score --vector runtime-boot",
-      "deno task validate"
-    ]
-  },
-  "promotion_rule": "non_regressing",
   "scoring": {
     "kind": "runtime_boot"
   },

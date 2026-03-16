@@ -1,13 +1,13 @@
 # WORKFLOW.md
 
 Owner: Repo Maintainers
-Last verified: 2026-03-13
+Last verified: 2026-03-16
 
 ## Purpose of the Constitutional Layer
 
 This file defines the repository rules that should change rarely and only deliberately. `AGENTS.md`
-stays a short map; `WORKFLOW.md` holds the protected operating policy for scorecards, experiments,
-promotion, rollback, and artifact handling.
+stays a short map; `WORKFLOW.md` holds the protected operating policy for the baseline starter:
+scorecards, validation, runtime evidence, and doc guardrails.
 
 ## Protected Files and Paths
 
@@ -19,18 +19,15 @@ Protected paths require an ExecPlan update and an explicit rationale before edit
 - `docs/**`
 - `scorecards/**`
 - `scripts/validate-docs.sh`
-- `scripts/score-contracts.ts`
-- `cmd/kernel/**`
+- `cmd/kernel.ts`
 - `internal/kernel/**`
-- `projects/registry.json`
-- `changes/**`
-- `.github/pull_request_template.md`
 - `fixtures/runtime/**`
 - `internal/runtimefixture/**`
-- `improvement/ledger/**`
+- `.github/workflows/**`
+- `.github/pull_request_template.md`
 
-Kernel changes are allowed when a human explicitly asks for constitutional or improvement-kernel
-work. Routine vector experiments should not mutate protected kernel files.
+Protected files define the starter contract. Simplify them cautiously and prefer making policy more
+checkable over adding more prose.
 
 ## Editable Scopes by Vector
 
@@ -41,16 +38,9 @@ work. Routine vector experiments should not mutate protected kernel files.
   `scripts/smoke.sh`, `scripts/install-deps.sh`, `docs/OBSERVABILITY.md`, `docs/RELIABILITY.md`,
   `docs/scorecards/runtime-boot.md`, `scorecards/runtime-boot.json` Goal: improve local bootability
   and runtime evidence without adding framework or cloud dependencies.
-- `automation-harness-health` Scope: `README.md`, `WORKFLOW.md`, `ARCHITECTURE.md`, `deno.json`,
-  `cmd/kernel.ts`, `internal/kernel/**`, `scripts/score-contracts.ts`, `projects/registry.json`,
-  `changes/**`, `.github/pull_request_template.md`, `docs/product-specs/**`,
-  `docs/scorecards/automation-harness-health.md`, `docs/generated/improvement/README.md`,
-  `docs/LINTS.md`, `docs/QUALITY_SCORE.md`, `docs/skills/experiment-loop.md`,
-  `scorecards/automation-harness-health.json` Goal: keep the template's proposal, change-package,
-  registry, and review-handoff contracts explicit and mechanically verifiable.
-- Constitutional/kernel work Scope: protected files only when a human explicitly requests a
-  constitutional rewrite or kernel change. Goal: keep the comparison logic, policy, and append-only
-  ledger conservative and auditable.
+- Constitutional/core-starter work Scope: protected files only when a human explicitly requests a
+  starter-contract rewrite. Goal: keep the baseline command surface, docs, and scorecards coherent
+  and conservative.
 
 ## Human Escalation Policy
 
@@ -58,51 +48,34 @@ Escalate only for:
 
 - product intent conflicts,
 - security/privacy tradeoffs,
-- promotion of a candidate that requires weakening guardrails,
+- changes that weaken baseline validation or doc guardrails,
 - destructive cleanup beyond the documented safe defaults.
 
 Otherwise, propose the decision in the ExecPlan, implement it, validate it, and record evidence.
 
-## Experiment Budgets
+## Baseline Workflow Rules
 
 - Respect each scorecard `budget_seconds`.
-- Prefer one vector at a time and small candidate diffs.
-- Stop and reject when a candidate needs broader edits than the vector scope allows.
-- Keep `deno task test` and `deno task validate` fast; runtime smoke and experiments stay separate
-  when they would slow the default loop.
-
-## Promotion Rules
-
-- `non_regressing`: candidate target metric must not worsen and all guardrails must pass.
-- `strict_improving`: candidate target metric must improve and all guardrails must pass.
-- Promotion uses `git merge --ff-only` only.
-- Missing metrics, missing artifacts, or failed guardrails are treated conservatively as
-  non-promotable.
-
-## Rollback Rules
-
-- `deno task revert` records a rejection artifact; it does not destroy data by default.
-- Candidate branches are deleted only with an explicit flag.
-- Ledger entries are append-only. Rejections add new artifacts; they do not rewrite history.
-- If a protected-file change regresses validation, fix forward or revert the change in a new
-  commit/branch; do not silently delete evidence.
+- Keep `deno task validate` fast; it is the canonical default loop.
+- `deno task smoke` and `deno task score --vector <vector>` are optional supporting checks, not part
+  of the baseline validation contract unless a task explicitly requires them.
+- Prefer transient evidence under `.tmp/` for routine runs.
 
 ## Artifact Retention
 
-- Keep ledger entries under `improvement/ledger/experiments/` indefinitely.
-- Keep the latest generated score/smoke/proposal artifacts under `docs/generated/improvement/`.
+- Keep `.tmp/` disposable local runtime and evidence state.
+- Keep `docs/generated/` for explicitly published or historical reference artifacts only.
 - Treat `.tmp/` as disposable local runtime/worktree state.
-- Scheduled maintenance is report-only in v1; it may upload artifacts but must not auto-merge or
-  auto-open PRs.
+- Scheduled maintenance is report-only; it may upload transient artifacts but must not auto-open PRs
+  or modify tracked files.
 
-## Rules for Updating Scorecards and Ledger Entries
+## Rules for Updating Scorecards
 
 - Any scorecard change must update:
   - the JSON in `scorecards/`,
   - the prose doc in `docs/scorecards/`,
-  - this file if editable scope or promotion policy changes.
+  - this file if editable scope changes.
 - Scorecard changes must preserve mechanical readability: explicit metric, direction, guardrails,
   budget, and editable scope.
-- Ledger entries are JSON, append-only, and created by tooling. Do not hand-edit historical entries
-  unless a follow-up ledger artifact explains the correction.
-- New vectors should start with a minimal, auditable evaluator before broader automation is added.
+- Default scorecards should improve baseline developer leverage directly. Advanced governance
+  workflows belong in optional extensions, not the starter contract.

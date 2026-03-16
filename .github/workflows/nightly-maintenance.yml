@@ -24,11 +24,10 @@ jobs:
         run: |
           deno task gc-docs
           deno task gc-structure
-          deno task gc-ledger
 
       - name: Upload maintenance artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nightly-maintenance-artifacts
-          path: docs/generated/improvement/
+          path: .tmp/improvement/

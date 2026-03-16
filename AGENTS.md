@@ -1,6 +1,6 @@
 # AGENTS.md (root)
 Owner: Repo Maintainers
-Last verified: 2026-03-12
+Last verified: 2026-03-16
 
 You are a coding agent working in this repository.
 This file is intentionally short. It is a map to deeper sources of truth in `docs/`.
@@ -11,19 +11,19 @@ If you’re unsure, make the system *more checkable*, not more clever.
 
 ## Operating loop
 1. Start at `docs/index.md`.
-2. Read `WORKFLOW.md` before changing protected files or running experiments.
+2. Read `WORKFLOW.md` before changing protected files.
 3. Create or refresh an ExecPlan in `docs/exec-plans/active/` for non-trivial work.
 4. Work in small steps, run the smallest relevant check, and record evidence.
 
 ## Core commands
 - `deno task`
 - `deno task install`
-- `deno task test`
 - `deno task validate`
 - `deno task smoke`
-- `deno task baseline --vector <scorecard>`
 - `deno task score --vector <scorecard>`
-- `deno task experiment --vector <scorecard> --candidate-ref <ref>`
+- `deno task gc-docs`
+- `deno task gc-structure`
+- `deno task publish-artifact --from <path> --to <path>`
 
 ## Repository knowledge is the system of record
 - Do NOT rely on external docs, chat history, or “tribal knowledge”.

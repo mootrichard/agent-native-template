@@ -15,14 +15,9 @@
     "docs-lint": "./scripts/validate-docs.sh",
     "test": "./scripts/test.sh",
     "validate": "./scripts/validate.sh",
-    "baseline": "deno run -A ./cmd/kernel.ts baseline",
     "score": "deno run -A ./cmd/kernel.ts score",
-    "experiment": "deno run -A ./cmd/kernel.ts experiment",
-    "propose": "deno run -A ./cmd/kernel.ts propose",
-    "promote": "deno run -A ./cmd/kernel.ts promote",
-    "revert": "deno run -A ./cmd/kernel.ts revert",
+    "publish-artifact": "deno run -A ./cmd/kernel.ts publish-artifact",
     "gc-docs": "deno run -A ./cmd/kernel.ts gc-docs",
-    "gc-structure": "deno run -A ./cmd/kernel.ts gc-structure",
-    "gc-ledger": "deno run -A ./cmd/kernel.ts gc-ledger"
+    "gc-structure": "deno run -A ./cmd/kernel.ts gc-structure"
   }
 }

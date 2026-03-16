@@ -1,7 +1,7 @@
 # Docs Hygiene Scorecard
 
 Owner: Repo Maintainers
-Last verified: 2026-03-13
+Last verified: 2026-03-16
 
 ## What this vector measures
 
@@ -25,14 +25,10 @@ the count of docs-validator failures and targets `failure_count` with direction 
 
 ## Artifacts
 
-- `docs/generated/improvement/docs-hygiene-score.json`
-- `docs/generated/improvement/docs-hygiene-baseline.json`
+- `.tmp/improvement/docs-hygiene-score.json`
 
 ## Operating notes
 
 - Run `deno task score --vector docs-hygiene` for the current score.
-- Run `deno task propose --vector docs-hygiene` to turn the current signals into a structured
-  proposal artifact.
-- Run `deno task baseline --vector docs-hygiene` before a docs-focused change set.
-- Run `deno task experiment --vector docs-hygiene --candidate-ref <ref>` to compare refs and write a
-  ledger entry.
+- Use `deno task publish-artifact --from .tmp/improvement/docs-hygiene-score.json --to <path>` only
+  when you intentionally want a versioned copy of the latest score.
